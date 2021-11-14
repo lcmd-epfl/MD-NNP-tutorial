@@ -53,7 +53,7 @@
 \hrule 
 \vspace{0.5cm}
 \begin{center}
-\LARGE \textbf{\textcolor{red}{M}olecular \textcolor{red}{D}ynamics meets \textcolor{red}{N}eural \textcolor{red}{N}etwork}: \\
+\LARGE \textbf{\textcolor{red}{M}olecular \textcolor{red}{D}ynamics meets \textcolor{red}{N}eural \textcolor{red}{N}etworks}: \\
 \LARGE \textbf{TUTORIAL}
 \vspace{0.5cm}
 \\ % The assignment title
@@ -194,7 +194,7 @@ In this tutorial, we use the original Behler-Parrinello ACSFs. However, during t
 %    \item unique description of the atomic positions
 %\end{itemize}
 %
-\subsection{Constructing and training a NN}
+\subsection{Constructing and training NN}
 The general protocol to construct NNP for a specific system is as follows:
 \begin{enumerate}
     \item Define an initial set of structures and compute the reference energies and forces. The electronic structure method used as a reference should be accurate enough to describe the studied problem, but also not too computationally demanding as many single point computations are needed.
@@ -224,16 +224,16 @@ For detailed general tutorial review on Behler-Parrinello NN, see Ref. \citenum{
 
 \fancyhead[L]{3. Requirements}
 \section{Requirements}
-This tutorial presents a workflow which requires extensive number of different software packages, scripts and libraries. The versiones of the codes used here are listed below.
+This tutorial presents a workflow which requires extensive number of different software packages, scripts and libraries. The versions of the codes used here are listed below.
 
 \subsection{Software}
-All the codes are available at GitHub (see last section to obtain the GitHub link):
+All the codes are available at GitHub (see the last section of tutorial):
 \begin{itemize}
-    \item Tinker (version 8.8)
     \item n2p2 (version 1.0.0)
-    \item cp2k (version 6.1)
-    \item i--PI (version 2.0)
     \item LAMMPS (version 2)
+    \item i--PI (version 2.0)
+    \item Tinker (version 8.8)
+    \item cp2k (version 6.1)
 \end{itemize}
 %
 \subsection{Dependencies}
@@ -258,7 +258,7 @@ All the codes are available at GitHub (see last section to obtain the GitHub lin
 \subsection*{Instructions}
 %Generating a Machine Learning Potentials (M is not of an easy task. Indeed, our approach depicts quite transferability between systems and prepared MLP as one MLP is dedicated to one system. Future works will be provided in this direction. For one specific system, generating a MLP following our procedure results in:
 
-Currently, there is no universal NNP which is applicable to model all classes of systems. Despite ongoing effort in the training of general neural network-based force-fields, many system requires building of the NNPs from scratch. In the following section, we provide general instructions how to train NNP using Behler-Parrinello NN. The required steps include: 
+Currently, there is no universal NNP which is applicable to model all classes of systems. Despite ongoing effort in the training of general neural network-based force-fields, many system require building of the NNPs from scratch. In the following section, we provide general instructions how to train NNP using Behler-Parrinello NN. The required steps include: 
 
 \begin{enumerate}
     \item Generating initial data;
@@ -280,7 +280,7 @@ Currently, there is no universal NNP which is applicable to model all classes of
 
 As a relatively simple test case, we train the NNPs for a small water box containing 27 water molecules with the cell size of 9.32 \AA. This systems contain only two elements, \textit{i.e.} H and O, which significantly simplifies the training.
 
-\subsection{Step 1: generation of data}
+\subsection{Step 1: Generating the data}
 \begin{mybox2}{{Files needed}}
 \begin{minipage}[c]{0.5\linewidth}
 \includegraphics[scale=0.2]{tinker.png}
@@ -295,7 +295,7 @@ As a relatively simple test case, we train the NNPs for a small water box contai
 \end{itemize}
 \end{minipage}
 \end{mybox2}
-The first step in the tutorial is the preparation of the training set. The training set can be build from systems with different size and different compositions. To keep things simple, we will train the NNPs using only one size of the water box defined above. To generate extensive set of the structures, it is beneficial to use molecular dynamics starting either from equilibrated structure or from experimental data (\textit{e.g.}, X-ray). For the solid state systems, random displacement of the atoms could be also applied.
+The first step in the tutorial is the preparation of the training set. The training set can be build from systems with different size and different compositions. To keep things simple, we will train the NNPs using only one size of the water box defined above. To generate extensive set of the structures, it is beneficial to use molecular dynamics starting either from equilibrated structure or from experimental data (\textit{e.g.}, X-ray). Random displacement of the atoms could be also applied.
 %\begin{enumerate}
 %    \item classical Molecular Dynamics (cMD) using non--polarizable force fields (n--PFF);
 %    \item cMD using polarizable force fields;
@@ -305,7 +305,7 @@ The first step in the tutorial is the preparation of the training set. The train
 
 %As the aim is to generate maximum of data at this point, MD should be fast enough to roughly sample the phase space. However, the dataset should be made off realistic structures, thus we decided to choose as a good compromise between accuracy and speed the cMD combining with the use of polarizable force field. \\
 
-As the first training set should be large enough but also contain meaningful geometries, the potential for the dynamics should represent good cost/accuracy ratio. For example, classical force-fields might not be the best choice, as they can sample structures far from the ones obtained at the reference level. The reasonable compromise are therefore semiempirical methods or polarizable force-fields.
+As the first training set should be large enough but also contain meaningful geometries, the potential for the exploratory dynamics should represent good cost/accuracy ratio. For example, classical force-fields might not be the best choice, as they can sample structures which are too different from the ones obtained at the reference level. The reasonable compromise are therefore semiempirical methods or polarizable force-fields.
 
 In this tutorial, we generate the system using AMOEBA polarizable force-field as available in Tinker. The files required for the simulation are *.xyz,  *.key and *.prm. For more information on the preparation of the files for Tinker, see tutorials listed in section \ref{sec:tutorials}.
 
@@ -334,12 +334,13 @@ This command means that the simulation will run using the \textit{dynamic} modul
 \end{enumerate}
 \end{mybox1}
 \begin{mybox1}{Extending the database with more distorted structures}
-\Warning The NNPs have in general very limiting extrapolation capabilities. As their are train only on the information covered by the test set, it is beneficial to consider more distorted structures covering the repulsive and dissociative part of the PES. Distorted structures can be generated by simulations using for example: 
+\Warning The NNPs have in general very limiting extrapolation capacity. As their are trained only on the information included in the training set, it is beneficial to consider more distorted structures covering the repulsive and dissociative parts of the PES. Distorted structures can be generated by simulations using for example: 
 \begin{enumerate}
     \item High temperature
     \item High pressure
     \item Path integral molecular dynamics
     \item Specific constraints and restraints
+    \item Random displacement
 \end{enumerate}
 
 \end{mybox1}
@@ -365,7 +366,7 @@ This command means that the simulation will run using the \textit{dynamic} modul
 \end{itemize}
 \end{minipage}
 \end{mybox2}
-Once the initial data are generated, we need to select small set of structures which will be used to generate a set of symmetry functions.  
+Once the initial data are generated, we need to select small set of structures which will be used to prepare a set of symmetry functions.  
 Let's assume that all generated structures are present in system.arc file. 
 %When more than 1 trajectory is performed, all the system.arc should be concatenated. If for instance you ran 5 independent MD, you should rename each .arc files as system1.arc / system2.arc / system3.arc / system4.arc / system5.arc and concatenate them in one single .arc file as:
 %\begin{center}
@@ -374,7 +375,7 @@ Let's assume that all generated structures are present in system.arc file.
 %In this case, while we only have on single .arc file we will continue with the system.arc file. \\
 %The first thing to do is to convert each frame of the system.arc file in the right format for the n2p2 software. This file, named \textbf{input.data}, has to contain all the considered structures. You could prepare this file following this procedure:
 
-Structures in this file can be converted to input files for n2p2 
+Structures in this file can be converted to input files for n2p2 as follows:
 
 \begin{enumerate}
     \item compile the fortran code \textcolor{red}{from\_txyz\_to\_n2p2.f90}:
@@ -392,7 +393,7 @@ The script generates input.data file for the n2p2 containing all the structures.
 "begin" and "comment" are present at the beginning of every new structure. "lattice" defines the dimension of the box. The units of the box and Cartesian coordinates are converted to Bohr.
 Each atom of the structure is defined as: \\ \\
  atom \hspace{0.5cm}  -4.367  \hspace{0.5cm}      5.267    \hspace{0.5cm}    4.603  \hspace{0.5cm}    O \hspace{0.5cm} 0 0 \hspace{0.5cm} 0.0 0.0 0.0 \\ \\
-The keyword "atom" specify that the line corresponds to one atom, -4.367, 5.267, 4.603 are the xyz coordinates of the atom, O is the label, the following two columns 0 0 are not used  and, finally, the last three columns 0.0 0.0 0.0 are the xyz force components acting on the atom. At this example, forces are set to 0.0 as no reference is present at this step., bu this will be changed after the next part of this tutorial.
+The keyword "atom" specify that the line corresponds to one atom, -4.367, 5.267, 4.603 are the xyz coordinates of the atom, O is the element label, the following two columns 0 0 are not used  and, finally, the last three columns 0.0 0.0 0.0 are the xyz force components acting on the atom. At this example, forces are set to 0.0 since they are not used.
 
 The file ends with: 
 
@@ -403,7 +404,7 @@ The file ends with:
 where "energy" is the reference total energy of the system, "charge" is the total charge of the system, and "end" closes the definition of the structure. 
 
 \begin{mybox1}{Units in n2p2}
-\Warning As indicated on the n2p2 website, the used units corresponds to the physical units defined in the input files. As we are combining several different codes which might have different unit specification, keep track on the units and stay consistent within the workflow.
+\Warning As indicated on the n2p2 website, the units correspond to the physical units defined in the input files. As we are combining several different codes which might have different unit specifications, keep track on the units and stay consistent within the workflow.
 
 In the inputs for n2p2, we use units as:
 \begin{enumerate}
@@ -412,6 +413,7 @@ In the inputs for n2p2, we use units as:
     \item x/y/z forces: \textbf{Hartree Bohr$^{-1}$}
     \item energy: \textbf{Hartree}
 \end{enumerate}
+
 \textcolor{red}{The conversion from Angström to Bohr is done by a multiplication by a factor \textbf{1.88973}}
 \end{mybox1}
 
@@ -446,7 +448,7 @@ We thus have two initial files:
     \item \textbf{input.data}
     \item \textbf{input.nn}
 \end{itemize}
-which are the base to launch n2p2 calculations.
+which are the base to launch n2p2 computations.
 \\
 \begin{mybox3}{Output Files}
 \begin{itemize}
@@ -455,7 +457,7 @@ which are the base to launch n2p2 calculations.
 \end{itemize}
 \end{mybox3}
 %
-\subsubsection{Launching first calculations with n2p2}
+\subsubsection{Launching first computations with n2p2}
 \begin{mybox2}{{Input Files, Executables and Scripts}}
 \begin{minipage}[c]{0.5\linewidth}
 \includegraphics[scale=0.1]{n2p2.png}
@@ -517,7 +519,7 @@ The \textbf{cursel.def} will be useful in the STEP 4 and \textbf{cursel.landmark
 \end{itemize}
 \end{mybox3}
 %
-\subsection{Step 3: Hybrid DFT force--energy calculations}
+\subsection{Step 3: Hybrid DFT force--energy computations}
 \subsubsection{Extracting structures of interest}
 \begin{mybox2}{{Input Files, Executables and Scripts}}
 \begin{minipage}[c]{0.5\linewidth}
@@ -533,18 +535,18 @@ The \textbf{cursel.def} will be useful in the STEP 4 and \textbf{cursel.landmark
 \end{itemize}
 \end{minipage}
 \end{mybox2}
-From the cursel.landmarks file generated in the previous step, we need to extract structures in order to perform single point reference calculations. From the input.data file you could apply a home script \textcolor{red}{selection.f90} as:
+From the cursel.landmarks file generated in the previous step, we need to extract structures in order to perform single point reference computations. From the input.data file you could apply a home script \textcolor{red}{selection.f90} as:
 \begin{center}
 \mybox{\textit{gfortran selection.f90 -o selection ; ./selection}}
 \end{center}
 It will generate a newfile labeled as \textbf{new--input.data} and containing the 1000 selected structures from the CUR procedures. 
 
-The next steps is now to extract each structures and to place them in an individual file for enabling cp2k calculations. This procedure corresponds, once again, to post--processing and could be performed in a two step way following this procedure:
+The next steps is now to extract each structures and to place them in an individual file for enabling cp2k computations. This procedure corresponds, once again, to post--processing and could be performed in a two step way following this procedure:
 \begin{enumerate}
     \item \textit{gfortran from\_data\_to\_xyz.f90 -o from\_data\_to\_xyz ; ./from\_data\_to\_xyz}
     \item \textit{gfortran from\_xyz\_to\_cp2k.f90 -o from\_xyz\_to\_cp2k ; ./from\_xyz\_to\_cp2k}
 \end{enumerate}
-You obtain a series of 1000 files named \$i-cp2k.xyz, which corresponds to the 1000 initial structure files for cp2k calculations.
+You obtain a series of 1000 files named \$i-cp2k.xyz, which corresponds to the 1000 initial structure files for cp2k computations.
 \\
 \begin{mybox3}{Output Files}
 \begin{itemize}
@@ -552,7 +554,7 @@ You obtain a series of 1000 files named \$i-cp2k.xyz, which corresponds to the 1
 \end{itemize}
 \end{mybox3}
 %
-\subsubsection{CP2K calculations}
+\subsubsection{CP2K computations}
 \begin{mybox2}{{Input Files, Executables and Scripts}}
 \begin{minipage}[c]{0.5\linewidth}
 \includegraphics[scale=0.1]{CP2K_logo.png}
@@ -565,7 +567,7 @@ You obtain a series of 1000 files named \$i-cp2k.xyz, which corresponds to the 1
 \end{itemize}
 \end{minipage}
 \end{mybox2}
-We firstly need to prepare one directory for one calculation. This task could be automatized using the \textcolor{red}{prep-file.sh} bash file which automatically create you 1000 directories, one per frame. Each of them contain one .xyz file and .cp2k file. The input.cp2k file is where we place specific keywords to parametrize the cp2k calculations. In our case, we are using the CP2K 6.1 version to perform reference energies and forces at the PBE--D3BJ level of theory. All elements are described with the TZV2P--MOLOPT basis set with cores represented by the dual--space Goedecker--Teter--Hutter pseudopotentials (GTH PBE). The plane--wave cutoff is set to 700 Ry with a relative cutoff of 70 Ry. All computations employ a Coulomb operator truncated at R=6 \AA~ and the auxilary de,sity matrix method with a cpFIT3 fiiting basis set. \\ \\
+We firstly need to prepare one directory for one calculation. This task could be automatized using the \textcolor{red}{prep-file.sh} bash file which automatically create you 1000 directories, one per frame. Each of them contain one .xyz file and .cp2k file. The input.cp2k file is where we place specific keywords to parametrize the cp2k computations. In our case, we are using the CP2K 6.1 version to perform reference energies and forces at the PBE--D3BJ level of theory. All elements are described with the TZV2P--MOLOPT basis set with cores represented by the dual--space Goedecker--Teter--Hutter pseudopotentials (GTH PBE). The plane--wave cutoff is set to 700 Ry with a relative cutoff of 70 Ry. All computations employ a Coulomb operator truncated at R=6 \AA~ and the auxilary de,sity matrix method with a cpFIT3 fiiting basis set. \\ \\
 To launch a cp2k calculation, just type in the directory of your .xyz and .cp2k files the following command:
 \begin{center}
 \mybox{\textit{cp2k.popt -i input.cp2k -o output.cp2k}}
@@ -691,7 +693,7 @@ and you launch your training procedure as:
 \end{mybox4}
 Several files are created, but the most interesting are:
 \begin{itemize}
-    \item \textbf{output.txt}: it is the main output file of the calculation. Initial parameters for the training procedure is listed to avoid some troubles in the initial setting. Sum of the training calculations each epoch are listed with for each one the calculation time. 
+    \item \textbf{output.txt}: it is the main output file of the calculation. Initial parameters for the training procedure is listed to avoid some troubles in the initial setting. Sum of the training computations each epoch are listed with for each one the calculation time. 
     \item \textbf{learning--curve.out}: this is the main file to easily plot the different learning curves using an external software.
     \item \textbf{weights}: for each atom a weight file is created. For instance as H is 1, for the epoch 120 you should obtain "weights.001.120.out". These files are a sum of all the weights used in the Neural Network connections (see the few reminder part on the NN). These files are crucial when the procedure should be restarted (see next subpart). 
 \end{itemize}
@@ -757,12 +759,12 @@ We finally generated our first NNP set. In order to improve it, we need to run i
 In our case, we would like to see how to link a "ready" NNP, this is why we will not use our NNP but another one already available in the n2p2 examples directory \textit{interface-LAMMPS/H2O\_RPBE-D3/nnp-data}.
 %
 \subsection{i--PI code}
-Since we have a NNP ables to reproduce accurately and fastly the forces and energies of water structures, it should be desirable to couple that to a Molecular Dynamics sofwtare. Two options are available to couple n2p2:
+Since we have a NNP able to reproduce accurately and fastly the forces and energies of water structures, it should be desirable to couple that to a Molecular Dynamics software. Two options are available to couple n2p2:
 \begin{itemize}
     \item The LAMMPS software
     \item The CABANA software
 \end{itemize}
-Our choice in this tutorial is focused on the first, the LAMMPS software. Once this choice of coupling is done, we need now to efficiently couple both to optimize the simulation time. In this direction, the software i--PI is clearly designed to perform this task as it corresponds to a universal force engine for advanced molecular dynamics. i--PI is an interface for advanced molecular simulations written in Python, designed to be used together with an ab initio evaluation of the interactions between the atoms. The main goal is to decouple the problem of evolving the ionic positions to sample the appropriate thermodynamic ensemble and the problem of computing the inter-atomic forces. It could be thus linked to several software such as LAMMPS, which is our main interest in this tutorial. One other interest to use the i--PI interface is that it suitable for high sampling (Replica--exchange) and free energy calculations (linkage with PLUMED available).
+Our choice in this tutorial is focused on the first, the LAMMPS software. Once this choice of coupling is done, we need now to efficiently couple both to optimize the simulation time. In this direction, the software i--PI is clearly designed to perform this task as it corresponds to a universal force engine for advanced molecular dynamics. i--PI is an interface for advanced molecular simulations written in Python, designed to be used together with an ab initio evaluation of the interactions between the atoms. The main goal is to decouple the problem of evolving the ionic positions to sample the appropriate thermodynamic ensemble and the problem of computing the inter-atomic forces. It could be thus linked to several software such as LAMMPS, which is our main interest in this tutorial. One other interest to use the i--PI interface is that it suitable for high sampling (Replica--exchange) and free energy computations (linkage with PLUMED available).
 %
 \subsection{Launching the i--PI interface}
 \begin{mybox2}{{Input Files, Executables and Scripts}}
@@ -870,15 +872,15 @@ Files \textbf{simulation.force\_0.xyz} and \textbf{simulation.pos\_0.xyz} will b
 \section{Part 3: From direct to baselined NNP}
 %
 \subsection{What is baselined NNP?}
-In the previous sections (parts 1 and 2) we saw how to generate a NNP and how to link it to the i--PI interface. While the great advantage of such an approach lies in the speed of computational time, accuracy as well as stability are two critical aspects that warrent attention. Indeed, while accuracy is not checked in our case, the stability is the first aspect which determine if a NNP is of a good quality or not. When a NNP is completely not stable and explodes in less than 1 ps, such an issue could comes from different sources:
+In the previous sections (parts 1 and 2) we learnt how to generate a NNP and how to use it within the i--PI interface. While the NNP trained directly on DFT data provide predictions at impressive speed, the stability and accuracy of these NNPs is often difficult to achieve. The problems with stability are probably the simplest ones to detect. The system simulated with non-stable NNPs has tendency to explode within the first picosecond of the simulation. The reasons might be:
 \begin{enumerate}
-    \item \textbf{The quality of the generated data}: instead of generating initial structures with the Tinker MD software, we could use semi--empirical DFT calculations to generate structures more closely to the quantum chemical accuracy. 
-    \item \textbf{The choice of symmetry functions}: the number as well as the spacing chosen to generate the symmetry functions play a crucial role in the stability of the NNP. This number should not be so important but not too low. 
-    \item \textbf{The amount of data}: Using direct NNP, the amount of data is also a critical aspect. The diversity but also the quality of data has to be checked in order to have an efficient amount of data to well cover the phase space.
+    \item \textbf{The quality of the generated data}: instead of generating initial structures with the Tinker MD software, we could use semi--empirical methods to generate structures more closely to \textit{ab initio} dynamics. 
+    \item \textbf{The choice of symmetry functions}: the number as well as the spacing chosen to generate the symmetry functions play a crucial role in the stability of the NNP. 
+    \item \textbf{Number of data points}: Direct NNP require relatively large number of structures to provide stable dynamics. Low nuber of the structures can be reason for instabilities in sparsely represented regions of PES.
 \end{enumerate}
-As you surely understood, determining of a NNP is not an easy task, even for a small water box. An alternative consists of using the NNP in a "baselined" way. Instead of calculating directly forces and energy, we use this NNP to correct the forces and energy calculated at a lower level of theory. This methods has been show to be less sensitive to all the criteria below but also to be more stable compared to the direct one. In the following part, we will see how to adapt our NNP in order to use it as a "Baselined NNP". 
+As demonstarted by the examples, stabilization of direct NNPs is not an easy task, even for a small water box. A suitable alternative is to train so called baselined NNP. Instead of reproducing directly the DFT forces and energy, the NNPs are trained to correct the forces and energy computed at a lower level of theory, for example semiempirical method. The baselined NNPs require lower number of structures and descriptors and more robust compared to the direct NNP. In the following part, we show how to adapt our NNP training protocol in order to use it as a "Baselined NNP". 
 %
-\subsection{Calculating baselined forces and energy}
+\subsection{Baselined forces and energy}
 \begin{mybox2}{{Input Files, Executables and Scripts}}
 \begin{minipage}[c]{0.5\linewidth}
 \includegraphics[scale=0.15]{xtb.png}
@@ -890,13 +892,13 @@ As you surely understood, determining of a NNP is not an easy task, even for a s
 \end{itemize}
 \end{minipage}
 \end{mybox2}
-While we already have the reference energies and forces coming from the cp2k calculations, we need to define now what we call a "baseline". In this tutorial, we consider the xtb calculator as our baseline. Therefore, forces and calculations will be then calculated at the "xtb level of theory" and then adjusted using the baselined--NNP with the PBE0 calculations. The first step is to calculate the forces and energies for each structures used in the input.data using the "xtb level of theory". As we need to define PBC, the gfn 1 functional will be considered. \\
-To proceed to the calculations, please follow these steps:
+While we already have the accurate reference energies and forces coming from the cp2k computations, we need to choose suitable baseline method. In this tutorial, we use semiempirical GFN0-xTB method. Therefore, energy and forces of the training structures need to be recomputed at this level. \\
+To proceed to the computations, please follow these steps:
 \begin{enumerate}
     \item Create one folder per structure and extract the corresponded structure from the input.data file and place it in the corresponded folder (\textit{prep.sh})
     \item Convert each frame (n2p2 format) in xyz format (\textit{prep2.sh} linked with \textit{from\_data\_to\_xtb.f90})
-    \item Submit interactively all the calculations at the gfn 1 level of theory (\textit{sub.sh})
-    \item Once all the calculations are ended, calculate the forces and energies difference for each frame and grab all the results in an unique file called new--input.data (\textit{calc--diff.sh}).
+    \item Submit interactively all the computations at the GFN0-xTB level of theory (\textit{sub.sh})
+    \item Once all the computations are ended, compute the differences between DFT and GFN0-xTB energies and forces for each frame and add the results in a new file called new--input.data (\textit{calc--diff.sh}).
 \end{enumerate}
 
 \begin{mybox3}{Output Files}
@@ -919,10 +921,10 @@ To proceed to the calculations, please follow these steps:
 \end{itemize}
 \end{minipage}
 \end{mybox2}
-First, change the new--input.data in input.data and place it in a new folder with the input.nn file. The procedure to train a Baselined--NNP is similar to a classical NNP:
+First, rename the new--input.data to input.data and place it in a new folder with the input.nn file. The procedure to train a Baselined--NNP is analogous to direct NNP:
 \begin{enumerate}
-    \item Use the \textcolor{green}{nnp--scaling} executable (see Step 4) to generate the corresponded scaling.data
-    \item Use the \textcolor{green}{nnp--train} executable (see Step 4 again) to train the new Baselined--NNP. 
+    \item Use the \textcolor{green}{nnp--scaling} executable (see Step 4) to generate the corresponding scaling.data
+    \item Use the \textcolor{green}{nnp--train} executable (see Step 4 again) to train Baselined--NNP. 
 \end{enumerate}
 
 \begin{mybox3}{Output Files}
@@ -950,9 +952,9 @@ First, change the new--input.data in input.data and place it in a new folder wit
 \end{minipage}
 \end{mybox2}
 
-Once the training is done and you checked the quality of the learning rate, you could launch your Baselined--NN MD following these steps. Note that there is a lot of similarities with the classical NN MD showed previously.
+Once the training is finished, you can launch your Baselined--NN MD similarly to direct NNP. The main difference is that apart from the NNP itself, you also need to perform computation of the baseline ate every step. The submission is  be done as follows: 
 \begin{enumerate}
-    \item Create a new directory labeled nnp--data and place in the input.data, input.nn, scaling.dat and the both weightsXXX.data files
+    \item Create a new directory labeled nnp--data and place there the input.data, input.nn, scaling.data and weightsXXX.data files from the last epoch
     \item Change the name of the weightsXXX.data files in respectively weights.001.data (H) and weights.008.data (O).
     \item Adapt the path of the nnp--data folder in the lmp1.in file
     \item Also adapt the sockets in the respectively files:
@@ -1010,7 +1012,7 @@ To run i--PI within such a mode (i.e multi--time--step), please follow the follo
     \item Adapt the sockets in input.xml, lmp1.in and xtb\_ase.py for the baselined NNP
     \item Launch the simulation with the sub.sh script file !
 \end{enumerate}
-In our case, we launched a multi--time--step simulation with an inner timestep of 0.5 fs where forces and energy are computed with the direct NNP and an outer timestep of 3 fs where forces and energy are computed using the xTB baselined and corrected with the baselined NNP. All the relative keywords are mentioned within the input.xml and the structure of the file does not differ from the previous ones met during the tutorial.
+In our case, we launched a multi--time--step simulation with an inner timestep of 0.5 fs where forces and energy are computed with the direct NNP and an outer timestep of 3 fs where forces and energy are computed using the xTB baseline and corrected with the baselined NNP. All the relative keywords are mentioned within the input.xml and the structure of the file does not differ from the previous ones met during the tutorial.
 \begin{mybox1}{Interpretation tools}
 \begin{itemize}
     \item The accuracy of such a dynamic is very sensitive to the energy conservation during the dynamics. Therefore, the choice of 0.5/3 was made in a sens to ensure the conservation of the energy. However on other systems careful attention should be taken on this conservation.
@@ -1061,23 +1063,22 @@ A list of supplementary tutorials is given to help users if questions appear (es
 \newpage
 \fancyhead[L]{9. Optimal protocol for stable NNP}
 \section{Optimal protocol for stable NNP}
-In this last section, we aim at providing to more advanced user optimal parameters to train a NNP which could be then used for production. Note that the proposed methods and parameters come from different works available in the literature and could be easily adapted to whatever studied case. 
+In this last section, we aim at providing optimal parameters to train a NNP which could be then used for production. Note that the proposed methods and parameters come from different works available in the literature and modifications might be needed. 
 
-
-\textbf{SYSTEM CASE}: The user want to model a direct NNP of an azobenzine in order to reproduce an \textit{ab--initio} MD. In this case, the user has to seperate two important components:
+\textbf{SYSTEM CASE}: The user want to model a direct NNP of an azobenzene in order to reproduce an \textit{ab--initio} MD. In this case, the user has to separate two important components:
 \begin{enumerate}
     \item How he will built his own NNP ?
     \item How he will train for ?
 \end{enumerate}
 These two features are complementary but have to be treated carefully and separated. Let us see how we suggest to proceed for that !
-\subsection{How to built a good starting NNP ?}
-The complexity (e.g related to the composition of the system) as well as the chemical event that any user would like to explore are two crucial parameters to take into account. Here, there is only 3 different atom types (H,C and N) and the system is made of 24 atoms. In case of the photoswitches, the event could be decoupled into two main parts:
+\subsection{How to build a good starting NNP ?}
+The complexity as well as the chemical event that any user would like to explore are two crucial parameters to take into account. Here, there is only 3 different atom types (H,C and N) and the system is made of 24 atoms. In case of the photoswitches, the event could be decoupled into two main parts:
 \begin{enumerate}
     \item \textbf{PHOTO}: a photo event comes from by an photo-excitation of the system through any wave length. 
     \item \textbf{SWITCH}: a switch event is related to the conformation switch of a molecule which is only due to thermal fluctuations.
 \end{enumerate}
-In our case, the photo part needs some external excitations, which is not available in MD--NN based only on the ground state Potential Energy Surface. Concerning the switch part, we have two available conformations: E and Z. One interesting question should be thus: \textbf{Which mechanic way should enable the switch of azobenzine from E to Z ?} \\
-To answer to this question, we need thus to prepare the NN according to this specific question. In our case, and according to the literature, azobenzine could depict two switch mechanisms: the inversion and the rotation. The aim is thus to let the choice of the desired path within our MD--NN to observe which way is preferred or not. Therefore, the NN has to know the existence of these two ways and structures taken to build the NN should be part of these pathways. \\
+In our case, the photo part needs some external excitations, which is not available in MD--NN based only on the ground state Potential Energy Surface. Concerning the switch part, we have two available conformations: E and Z. One interesting question should be thus: \textbf{Which mechanic way should enable the switch of azobenzene from E to Z ?} \\
+To answer to this question, we need thus to prepare the NN according to this specific question. In our case, and according to the literature, azobenzene could depict two switch mechanisms: the inversion and the rotation. The aim is thus to let the choice of the desired path within our MD--NN to observe which way is preferred or not. Therefore, the NN has to know the existence of these two ways and structures taken to build the NN should be part of these pathways. \\
 To generate these structures, you can follow the following instructions:
 \begin{enumerate}
     \item For each pathway, generate a metadynamics of several ns using a baselined (DFTB+, xTB) using i--Pi coupled to the baselined and plumed,
