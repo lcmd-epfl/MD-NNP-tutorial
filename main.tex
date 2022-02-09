@@ -65,8 +65,8 @@
 \end{center}
 \vspace{1cm}
 \begin{center}
-    Veronika JURÁSKOVÁ \\
     Frédéric CELERSE \\
+    Veronika JURÁSKOVÁ \\
     Rubén LAPLAZA \\
     Clémence CORMINBOEUF
 \end{center}
@@ -92,41 +92,27 @@
 \fancyfoot[R]{\today}
 \section{Introduction}
 \fancyhead[L]{1. Introduction}
-The aim of this tutorial is to provide a guidance for a building of the neural network-based potentials (NNPs) and their application in molecular dynamics (MD). As the traditional \textit{ab initio} MD is too computationally demanding for the description of chemical reactions and processes in large systems, the MD with NNPs benefits from much lower cost of the simulation while the accuracy it the AIMD is conserved.  %As chemical studies often involve reactions between two or more species, including such a feature in conventional  Born--Oppenheimer MD is commonly used in this context, however the numerical evaluation of energies and forces at the DFT level is extremely computationally demanding especially when applied to systems containing large number of atoms, \textit{e.g.} in the condensed phase. MD using a classical force field has been proposed as a solution to overcome this issue, but the form of the potential terms (\textit{i.e.}, harmonic) prevents bond breaking/forming in these simulations, limiting such approaches only to conformational sampling. \\ 
-%In this tutorial, we describe how to enhance the speed of reactive systems simulation by exploiting the Neural Network-based potentials. 
-In this regard, NNPs has been already used in the reactive simulations in gas phase and aqueous solutions (\textit{e.g.}, in the description of proton transfer and urea hydrolysis). %NNPs are trained to reproduce the energies (and possibly forces) of the accurate ab initio me. The main advantage of the NN is the low computational cost compare to pure Born--Oppenheimer DFT simulation. The NN based potentials are however still slower than a force field MD.
+This tutorial aims to guide the building of neural network-based potentials (NNPs) and their application in molecular dynamics (MD). As the traditional \textit{ab initio} MD is too computationally demanding to obtain statistically converged simulations of chemical reactions and processes in large systems, the MD with NNPs benefits from the much lower cost of the simulation while the accuracy of the AIMD is conserved.  
+In this regard, NNPs have been already used in the reactive simulations in the gas phase and aqueous solutions (\textit{e.g.}, in the description of proton transfer and urea hydrolysis). 
 
-Part 1 of this tutorial is dedicated to the generation of the Behler-Parrinello NNPs, which represent the most complicated task of this tutorial as the preparation of a large and robust data set is time consuming and the accuracy of the training needs to be carefully monitored.
+\textbf{Part 1} of this tutorial is dedicated to the generation of the Behler-Parrinello NNPs, including the preparation of a robust data set, selection of the descriptors and monitoring of the accuracy of the training. \textbf{Part 2} demonstrates how to use the NNPs using the i--Pi interface to LAMMPS and other codes. Finally, \textbf{Part 3} introduces the concept of baselined NNPs and showcases its advantages compared to NNPs trained directly on DFT data. 
 
-  %  \item It is time consuming to prepare sufficiently large and robust dataset; 
-  %  \item Training properties (direct, $\Delta$, ...) play a crucial role in the prediction accuracy of the our MD/ML, so the training part has to be checked very carefully.
-
-Part 2 demonstrates how to use the NNPs using the i--Pi interface to LAMMPS and other codes. Finally, Part 3 introduces the Baselined NNPs and showcase its advantages compared to standard NNPs trained directly on DFT data. %\textbf{It is important to note that even if final results do not provide chemical stability, the main importance of this tutorial is to provide you most important tools to understand how to deal with ML and MD. }
-%\vspace{3cm}
-%\begin{mybox1}{}
-%\Warning All the data you need to follow this tutorial are freely available on the lcmdlc2 %local cluster at this adress: \textit{/home/celerse/Tutorial-fred-NNMD}
-%\end{mybox1}
-\newpage
-%
 
 \fancyhead[L]{2. Neural Networks-based potentials: Crash course}
+
 \section{Neural Networks-based potentials: Crash course}
-%
+
+\textbf{Neural Networks are statistical models which can reproduce complex non-linear functions using large amounts of so-called training points.} The availability of so-called \textit{Big data} in a broad range of human activities resulted in the harvesting of neural networks in the development of game-playing models, speech and text recognition software, or analysis of patients' data in modern health care, to name a few. Recently, the power of NN to reproduce highly complex data has been exploited in the development of a new generation of potentials for molecular dynamics. The Neural Network Potentials (NNPs) are trained to mimic the shape of the corresponding potential energy surface using the \textbf{data sets} containing coordinates and corresponding \textit{ab initio} data (i.e., energy and possibly forces). The resulting NNPs are then used to propagate molecular dynamics with the accuracy of the underlying \textit{ab initio} method but with a fraction of its original cost. Many NN architectures to train the NNPs have been proposed during the last years. In this tutorial, we focus on the training of Behler-Parrinello NNPs based on feedforward NN.  
+
 \subsection{Feedforward Neural Networks}
 \begin{figure}[!h]
     \centering
     \includegraphics[scale=0.4]{NNP_scheme.jpeg}
-    \caption{Schematic representation of a small feedforward NN. Nodes are interconnected in order to establish a functional relation between a set of coordinates $G$ (input layer) and the potential energy of the structure E (output layer). Notation of this NN is 4--5--4--1. }
+    \caption{Schematic representation of a small feedforward NN. Nodes are interconnected in order to establish a functional relation between a set of coordinates $G$ (input layer) and the potential energy of the structure E (output layer). }
     \label{NNP_scheme}
 \end{figure}
-\textbf{Neural Networks are statistical learning models which are able to reproduce complex non-linear mathematical functions, \textit{e.g.} the potential energy surface of molecular systems.} Using the so-called \textbf{data set}, the aim is to train the Neural Network Potentials (NNPs), which are used to propagate atom dynamics by estimating the shape of the potential energy surface. The forces are computed analytically as a negative gradient of the potential energy. As depicted in Fig. \ref{NNP_scheme}, the feedforward NN is made from number of nodes organized in several interconnected layers. The potential energy \textit{E} corresponds to the node in output layer and the atomic coordinates of a frame are provided in the input layer as a set of vector of input coordinates $G=\{G_i\}$. The input and output layers are connected via several so-called hidden layers with no physical meaning. The number of layers and the nodes defines the flexibility of the final NN. The example shows the NN with two layers containing five and four nodes, respectively. The short notation of such a NN is written as 4--5--4--1. The explanation of the notation is the following:
-\begin{itemize}
-    \item 4: Four nodes represent the input layer ($G_1$, $G_2$, $G_3$ and $G_4$);
-    \item 5: Fives nodes in the first hidden layer;
-    \item 4: Four nodes in the second hidden layer;
-    \item 1: One node (the potential energy) in the output layer.
-\end{itemize}
-Each node is connected to all the nodes of the next layer with a specific weight \textbf{$a_{ij}^{kl}$}, where $i$ is the index of node of layer $k$, which is connected to the node with index $j$ of layer $l$. For instance, the $a_{45}^{01}$ connects the nodes $G_4$ ($k = 0$, $i=4$) and $y_5^1$ ($l=1$,  $j=5$). All the connections between nodes follow the same nomenclature. Not represented in our scheme, all the nodes in hidden and output layers are connected to so-called bias node, which scales their values by a bias weight b$_i^j$, where $j$ is the layer of the target node and $i$ the node index. 
+The example of the feedforward NN is depicted in Fig. \ref{NNP_scheme}. It is made from several nodes organized in interconnected layers. The potential energy \textit{E} corresponds to the node in the \textbf{output layer} and the atomic coordinates of a frame are provided in the \textbf{input layer} as vectors of input coordinates $G=\{G_i\}$. The input and output layers are connected via several so-called \textbf{hidden layers} with no physical meaning. The number of layers and the nodes define the flexibility of the final NN. The example shows the NN with two layers containing five and four nodes, respectively. 
+Each node is connected to the nodes of the next layer with a specific weight \textbf{$a_{ij}^{kl}$}, where $i$ is the index of a node of layer $k$, which is connected to the node with index $j$ of layer $l$. For instance, the $a_{45}^{01}$ connects the nodes $G_4$ ($k = 0$, $i=4$) and $y_5^1$ ($l=1$,  $j=5$). Nodes in hidden and output layers are connected to a so-called bias node, which scales their values by a bias weight b$_i^j$, where $j$ is the layer of the target node and $i$ is the node index. In our scheme, the bias node is omitted for simplicity.
 
 The value y$_i^j$ of any node is computed as:
 \begin{equation}
@@ -146,8 +132,6 @@ According to Figure~\ref{NNP_scheme}, the complete functional form for the energ
     E = f_1^3(b_1^3 + \sum_{k=1}^4 a_{k1}^{23} f_k^2 (b_k^2 + \sum_{j=1}^5 a{jk}^{12} f_j^1 (b_j^1 + \sum_{i=1}^4 a_{ij}^{01} G_i)))
 \end{equation}
 
-%The NNP constructed this way does not contain any information about the physics of the system. It simply links provided accurate electronic energy with the corresponding coordinates. The weight parameters in the NN are initially chosen as random numbers and are interativelly optimized to provide best estimation of the enrgy from given structure. However, the NN typically requi the longer the optimization process will be, but results will also be more precise. It is therefore important to find a good compromise between accuracy and dataset size This compromise has also to be reached regarding the number of nodes and layers, as increasing the number of nodes and layers also makes the optimisation slower but improve the accuracy.
-%
 \subsection{High--dimensional NNP}
 \begin{figure}[!htp]
     \centering
@@ -155,20 +139,20 @@ According to Figure~\ref{NNP_scheme}, the complete functional form for the energ
     \caption{High dimensional NN scheme: Atomic positions are represented by a vector of symmetry functions $G_i$. }
     \label{High-dimensional-NNP_scheme}
 \end{figure}
-Feedforward neural network discussed in previous section suffer from several drawbacks which prevented their application in the simulation of complex chemical systems. The limitations are for instance:
+Feedforward neural networks discussed in the previous section suffer from several drawbacks preventing their application in the simulation of complex chemical systems. The limitations are, for instance:
 \begin{enumerate}
     \item absence of symmetry between equivalent terms (for instance, the OH bonds of a water molecule)
-    \item system size dependency: no atoms could be deleted or added as it causes problems in the connecting weights).
+    \item system size dependency: no atoms could be deleted or added as it causes problems in the connecting weights.
 \end{enumerate}
 In 2007, Behler and Parrinello proposed a solution to this problem by expressing the total energy $E_s$ as a sum of the atomic energy contributions E$_i$.\cite{Behler2007}
 \begin{equation}
     E_s = \sum_{i=1}^{N_{atom}} E_i
 \end{equation}
-Starting from the Cartesian coordinates $R$, every atom is represented by a set of atom-centered symmetry functions $G_i$, which describe the chemical environment of the atom within given cutoff. Each atom is then assigned a feedforward NN yielding the atomic contribution to the total energy. The weight of the NN are identical for atoms of the same element to ensure that the trained NNPs do not depend on the number and order of the atoms.
+Starting from the Cartesian coordinates $R$, every atom is represented by a set of atom-centered symmetry functions $G_i$, which describe the atoms' chemical environment within a given cutoff. Each atom is then assigned a feedforward NN yielding the atomic contribution to the total energy. The weights of the NN are identical for atoms of the same element to ensure that the trained NNPs do not depend on the number and order of the atoms.
 %
 \subsection{Atom-centered symmetry functions}
 
-Together with the NN topology, the seminal work of Behler and Parrinello introduced also new type of the symmetry functions to characterize the local environment of each atom. The so-called Atom-centered symmetry functions (ACSFs)\cite{behl11jcp} are constructed from the positions of the atoms and their closest neighbours. This representation guarantees that the atoms with the same environment yields the same atomic energy contribution which is also translationally and rotationally invariant. 
+Together with the NN topology, the seminal work of Behler and Parrinello introduced also new types of symmetry functions to characterize the local environment of each atom. The so-called Atom-centered symmetry functions (ACSFs)\cite{behl11jcp} are constructed from the positions of the atoms and their closest neighbors. This representation guarantees that the atoms with the same environment yield the same atomic energy contribution which is also translationally and rotationally invariant. 
 
 The typically used ACSFs are two-body radial and three-body angular functions in a form:
 
@@ -182,42 +166,19 @@ The typically used ACSFs are two-body radial and three-body angular functions in
 
 where $f_c$ is a cutoff function ensuring the smooth decay of the symmetry function to zero.   
 
-In this tutorial, we use the original Behler-Parrinello ACSFs. However, during the last years many modifications to the original ACSFs were proposed as well as new types of functional forms to describe the atomic environments. Various types of structural representations are summarized for example in Ref. \citenum{Musil2021}.
+In this tutorial, we use the original Behler-Parrinello ACSFs. However, during the last years, many modifications to the original ACSFs were proposed as well as new types of functional forms to describe the atomic environments. Various types of structural representations are summarized for example in Ref. \citenum{Musil2021}.
 
-%Symmetry function is a tool aiming at describing atomic configurations as a suitable set of coordinates. Indeed, a symmetry function needs to be suitable for the high--dimensional NNP problem, in other words, overcoming the invariance issue as well as to be independant of the number of atoms (in the cutoff spheres). Constructing such symmetry functions have been long time a major challenge in the advent of NNPs. As many type of symmetry functions exists, our choice in this tutorial is focused on the Behler--Parinello symmetry functions (ASFs), whihc are characterized by:
-
-%Atom-centered symmetry functions (ACSFs) 
-%
-%\begin{itemize}
-%    \item rotational and translational invariance
-%    \item invariance with respect to the permutation of atoms of the same element
-%    \item unique description of the atomic positions
-%\end{itemize}
-%
 \subsection{Constructing and training NN}
-The general protocol to construct NNP for a specific system is as follows:
+The general protocol to construct NNP is as follows:
 \begin{enumerate}
-    \item Define an initial set of structures and compute the reference energies and forces. The electronic structure method used as a reference should be accurate enough to describe the studied problem, but also not too computationally demanding as many single point computations are needed.
-    \item Train first versions of NNP using the fraction of the data set. The remaining part of the set is used as a test set. Ideally, several different NNP with slightly different training sets should be trained to identify problems in the training set.
-    \item Perform preliminary simulations using the NNPs to validate the stability of the NNP and find underrepresented areas of the PES, \textit{e.g.} structures triggering extrapolation warnings or unphysical geometries.
-    \item Isolate the problematic structure, compute reference data and add them to the training set and re-train the NNP.
-    \item Repeat the validation and re-training of the NNP until no instabilities are found and NNP are ready to be used.
+    \item \textbf{Define an initial set of structures and compute the reference energies and forces.} The electronic structure method used as a reference should be accurate enough to describe the studied problem.
+    \item T\textbf{rain the first version of NNPs.} The fraction of the data set (\textit{e.g.} 80 \%) is used in the NNP training (so-called training set) while the remaining part serves as a test set to validate the error on unseen data. Ideally, several different NNP with different training sets should be trained to identify potential problems in the training set.
+    \item \textbf{Perform preliminary simulations using the NNPs} to evaluate the stability of the NNP and identify underrepresented areas of the PES, \textit{e.g.} structures triggering extrapolation warnings or unphysical geometries.
+    \item \textbf{Isolate the problematic structures}, compute reference data and add them to the training set and re-train the NNP.
+    \item Repeat the validation and re-training of the NNP until no instabilities are present.
 \end{enumerate}
 
-For detailed general tutorial review on Behler-Parrinello NN, see Ref. \citenum{Behler2015tutorial}. 
-
-%
-%\subsection{References}
-\bibliographystyle{achemso}
-\bibliography{bib}
-%Complementary to the small explanation of the context of this tutorial, we strongly suggest to the reader a small list of articles which explain well the concept of NNP in more details:
-%\begin{itemize}
-%    \item Behler, J., Parrinello, M. (\textbf{2007}). Generalized neural-network representation of high-dimensional %potential-energy surfaces. \textit{Physical review letters}, 98(14), 146401.
-%    \item Behler, J. (\textbf{2011}). Atom-centered symmetry functions for constructing high-dimensional neural network %potentials. \textit{The Journal of chemical physics}, 134(7), 074106.
-%    \item Behler, J. (\textbf{2015}). Constructing high‐dimensional neural network potentials: A tutorial review. \textit{International Journal of Quantum Chemistry}, 115(16), 1032-1050.
-%    \item Behler, J. (\textbf{2021}). Four generations of high-dimensional neural network potentials. \textit{Chemical Reviews}.
-%\end{itemize}
-%
+For a detailed general tutorial review on Behler-Parrinello NN, see Ref. \citenum{Behler2015tutorial}. 
 
 \newpage
 %
@@ -241,32 +202,33 @@ All the codes are available at GitHub (see the last section of tutorial):
     \item python (version 2.7 and 3.6)
     \item libraries intel, intel-mpi, intel-mkl, gsl, eigen, gc,c mvapich2, openblas, n2p2/lib
 \end{itemize}
-%
-%\subsection{Compilers}
-%\begin{itemize}
-%    \item gfortran (fortran compiler)
-%    \item bash/shell (bash/shell compiler)
-%    \item tclsh (tcl compiler)
-%\end{itemize}
-%
-%
-%
+
 \newpage
 %
 \fancyhead[L]{4. Building NNPs}
 \section{Part 1: How to generate neural network potentials}
 \subsection*{Instructions}
-%Generating a Machine Learning Potentials (M is not of an easy task. Indeed, our approach depicts quite transferability between systems and prepared MLP as one MLP is dedicated to one system. Future works will be provided in this direction. For one specific system, generating a MLP following our procedure results in:
 
-Currently, there is no universal NNP which is applicable to model all classes of systems. Despite ongoing effort in the training of general neural network-based force-fields, many system require building of the NNPs from scratch. In the following section, we provide general instructions how to train NNP using Behler-Parrinello NN. The required steps include: 
+Currently, there is no universal NNP that is applicable to model all classes of systems. Despite the ongoing efforts in the training of general neural network-based force fields, many systems require building the NNPs from scratch. In the following section, we provide general instructions on how to train NNP using the Behler-Parrinello approach. The required steps include: 
 
 \begin{enumerate}
-    \item Generating initial data;
-    \item Careful selection of a database of structures in order to provide the best representation of the conformational space while keeping the number of structures relatively low;
-    \item Computation of reference forces and energies for all the selected structures;
+    \item Sampling of the phase space to produce initial training structure;
+    \item Generating a large pool of symmetry functions;
+    \item Identification of a representative set of fingerprints;
+    \item Careful selection of a small set of structures for the training of NN;
+    \item Computation of reference forces and energies for the selected structures;
     \item Training of the NN.
 \end{enumerate}
-%
+
+The training protocol is summarized in the Fig. \ref{protocol}.
+\begin{figure} [!htp]
+    \centering
+    \includegraphics[scale=1.5]{protocol.png}
+    \caption{Scheme of the NNP preparation.}
+    \label{protocol}
+\end{figure}
+
+\newpage
 \subsection{Step 0: The system}
 \begin{figure} [!htp]
     \centering
@@ -274,11 +236,8 @@ Currently, there is no universal NNP which is applicable to model all classes of
     \caption{System containing 27 molecules in a cubic box with edge of 9.32 \AA.}
     \label{Rep_sys}
 \end{figure}
-%As we need to choose a practical system (which is not too big) in order to facilitate the understanding of this tutorial, our choice was focused on a tiny water box of 81 atoms (eg 27 water molecules, see Figure~\ref{Rep_sys}). A cubic waterbox of dimension 9.32 \AA~ has been considered. The aim is thus to be able to reproduce as accurately as possible the energetics and forces occurring in the system in different conformations during a MD/ML.
- 
-%
 
-As a relatively simple test case, we train the NNPs for a small water box containing 27 water molecules with the cell size of 9.32 \AA. This systems contain only two elements, \textit{i.e.} H and O, which significantly simplifies the training.
+As a relatively simple test case, we train the NNPs for a small water box containing 27 water molecules with a cell size of 9.32 \AA. These systems are composed of only two elements, \textit{i.e.} H and O, which significantly simplifies the training.
 
 \subsection{Step 1: Generating the data}
 \begin{mybox2}{{Files needed}}
@@ -295,38 +254,31 @@ As a relatively simple test case, we train the NNPs for a small water box contai
 \end{itemize}
 \end{minipage}
 \end{mybox2}
-The first step in the tutorial is the preparation of the training set. The training set can be build from systems with different size and different compositions. To keep things simple, we will train the NNPs using only one size of the water box defined above. To generate extensive set of the structures, it is beneficial to use molecular dynamics starting either from equilibrated structure or from experimental data (\textit{e.g.}, X-ray). Random displacement of the atoms could be also applied.
-%\begin{enumerate}
-%    \item classical Molecular Dynamics (cMD) using non--polarizable force fields (n--PFF);
-%    \item cMD using polarizable force fields;
-%    \item Hybrid DFT MD (DFTB+, xtB, orca, ...)
-%    \item Born--Openheimer MD (Quantum espresso, cp2k, ...)
-%\end{enumerate}
 
-%As the aim is to generate maximum of data at this point, MD should be fast enough to roughly sample the phase space. However, the dataset should be made off realistic structures, thus we decided to choose as a good compromise between accuracy and speed the cMD combining with the use of polarizable force field. \\
+The first step in the tutorial is the preparation of the training set. The training set can contain systems of different sizes and different compositions. To keep things simple, we will train the NNPs using only one size of the water box. To generate an extensive set of the structures, it is beneficial to use molecular dynamics starting either from equilibrated structure or from experimental data (\textit{e.g.}, X-ray). Random displacement of the atoms could be also applied.
 
-As the first training set should be large enough but also contain meaningful geometries, the potential for the exploratory dynamics should represent good cost/accuracy ratio. For example, classical force-fields might not be the best choice, as they can sample structures which are too different from the ones obtained at the reference level. The reasonable compromise are therefore semiempirical methods or polarizable force-fields.
+As the first training set should be large enough and contain representative geometries, the potential for the exploratory dynamics should provide a reasonable cost/accuracy ratio. For example, classical force fields might not be the best choice, as they can sample structures that are too different from the ones obtained at the reference level. The suitable compromise is, therefore, the application of semiempirical methods or polarizable force fields.
 
-In this tutorial, we generate the system using AMOEBA polarizable force-field as available in Tinker. The files required for the simulation are *.xyz,  *.key and *.prm. For more information on the preparation of the files for Tinker, see tutorials listed in section \ref{sec:tutorials}.
+Herein we generate the system using AMOEBA polarizable force-field as available in Tinker. The files required for the simulation are *.xyz,  *.key, and *.prm. For more information on the preparation of the files for Tinker, see tutorials listed in section \ref{sec:tutorials}.
 
-Here, we just briefly comment on the content of the files:
+The files contain:
 
 \begin{itemize}
-    \item The .xyz file contains the Cartesian coordinates of the initial water box in the Tinker xyz format (Caution! Tinker xyz differs significantly from standard xyz or extended xyz formats.)  
-    \item The .key file has the role of an input file. It contains the settings to run the dynamics.
-    \item The .dyn serves as a restart file. It contains positions, velocities and accelerations of the last frame of the dynamics.
-    \item The .prm file corresponds to the AMOEBA parameters. It contains all the terms to compute the potential energy of a specific structure.
+    \item The *.xyz file - the Cartesian coordinates of the initial water box in the Tinker xyz format (Caution! Tinker xyz differs significantly from standard xyz or extended xyz formats.)  
+    \item The *.key file - the settings to run the dynamics.
+    \item The *.dyn - positions, velocities, and accelerations of the last frame of the dynamics.
+    \item The *.prm file - AMOEBA parameters (all the terms to compute the potential energy of a specific structure)
 \end{itemize}
 
-%The simplest as the fastest way to perform a cMD is to launch only 1 in a specific direction. Therefore, on your cluster you first need to place all these files (system.xyz, system.key and water03.prm) in a same directory. Once this is done, you could easily launch your dynamics using the following command line (if the \textcolor{green}{dynamic} module is in your bin directory):
-MD using Tinker can be launched by a following command:
+MD using Tinker can be launched as:
 \begin{center}
 \mybox{\textit{dynamic system 1000000 2.0 1 2 300 $>$ system.out}}
 \end{center}
-This command means that the simulation will run using the \textit{dynamic} module for 1000000 steps with a time step of 2.0 fs (\textit{i.e.}, the total length of the simulation is 2 ns). The next term specifies the frequency (in ps) of saving the trajectory to the .arc file, here we save it every 1 ps. The final system.arc file will thus contain 2000 frames. The following term specifies the mode of the dynamics, 2 corresponds to NVT canonical ensemble. The last term corresponds to the temperature of the simulation, here it is set to 300 K. 
+
+This command means that the simulation will run using the \textit{dynamic} module of Tinker for 1000000 steps with a time step of 2.0 fs (\textit{i.e.}, the total length of the simulation is 2 ns). The next term specifies the frequency (in ps) of saving the trajectory to the *.arc file (here we save it every 1 ps). The final \textit{system.arc} file will thus contain 2000 frames. The following term specifies the mode of the dynamics, 2 corresponds to NVT canonical ensemble. The last term corresponds to the simulation temperature (300 K). 
 
 \begin{mybox1}{Enhanced sampling}
-\Warning As our system is quite simple, the standard molecular dynamics is sufficient to provide extensive sampling. In more complex cases, however, the simulations starting from different initial structures or using enhanced sampling techniques might be needed to ensure that all the relevant structures are present. Suitable simulations techniques include for instance:
+\Warning As the system is quite simple, the standard molecular dynamics are sufficient to provide an extensive sampling. In more complex cases, however, the simulations starting from different initial structures or using enhanced sampling techniques might be needed to ensure that all the relevant structures are present in the training set. Suitable simulations techniques include, for instance:
 \begin{enumerate}
     \item Replica exchange molecular dynamics
     \item Sampling techniques using bias, such as metadynamics, steered molecular dynamics, umbrella sampling, ...
@@ -334,7 +286,8 @@ This command means that the simulation will run using the \textit{dynamic} modul
 \end{enumerate}
 \end{mybox1}
 \begin{mybox1}{Extending the database with more distorted structures}
-\Warning The NNPs have in general very limiting extrapolation capacity. As their are trained only on the information included in the training set, it is beneficial to consider more distorted structures covering the repulsive and dissociative parts of the PES. Distorted structures can be generated by simulations using for example: 
+
+\Warning The NNPs have in general very limiting extrapolation capacity. As they are trained only on the information included in the training set, it is beneficial to consider more distorted structures covering the repulsive and dissociative parts of the PES. Distorted structures can be generated by simulations using, for example: 
 \begin{enumerate}
     \item High temperature
     \item High pressure
@@ -352,8 +305,10 @@ This command means that the simulation will run using the \textit{dynamic} modul
 \end{itemize}
 \end{mybox3}
 %
-\subsection{Step 2: Database selection}
-\subsubsection{Preparing files for n2p2}
+\subsection{Step 2: Descriptor selection}
+To assign the structures with a suitable set of descriptors, we generate a large pool of the ACSFs and select a small representative set using, for example, CUR decomposition.
+
+\subsubsection{Generating symmetry functions}
 \begin{mybox2}{{Input Files, Executables and Scripts}}
 \begin{minipage}[c]{0.5\linewidth}
 \includegraphics[scale=0.1]{Python-fortran.jpeg}
@@ -362,18 +317,12 @@ This command means that the simulation will run using the \textit{dynamic} modul
 \begin{itemize}
     \item system.arc
     \item \textcolor{red}{from\_txyz\_to\_n2p2.f90}
-    \item \textcolor{red}{symmtery\_functions.py}
+    \item \textcolor{red}{symmetry\_functions.py}
 \end{itemize}
 \end{minipage}
 \end{mybox2}
-Once the initial data are generated, we need to select small set of structures which will be used to prepare a set of symmetry functions.  
-Let's assume that all generated structures are present in system.arc file. 
-%When more than 1 trajectory is performed, all the system.arc should be concatenated. If for instance you ran 5 independent MD, you should rename each .arc files as system1.arc / system2.arc / system3.arc / system4.arc / system5.arc and concatenate them in one single .arc file as:
-%\begin{center}
-%\mybox{\textit{cat system1.arc system2.arc system3.arc system4.arc system5.arc $>$ SYSTEM-TOT.arc}}
-%\end{center}
-%In this case, while we only have on single .arc file we will continue with the system.arc file. \\
-%The first thing to do is to convert each frame of the system.arc file in the right format for the n2p2 software. This file, named \textbf{input.data}, has to contain all the considered structures. You could prepare this file following this procedure:
+
+As a first step, place the structures generated in the previous part to the \textit{system.arc} file. 
 
 Structures in this file can be converted to input files for n2p2 as follows:
 
@@ -382,31 +331,34 @@ Structures in this file can be converted to input files for n2p2 as follows:
     \textit{gfortran from\_txyz\_to\_gen.f90 -o from\_txyz\_to\_gen} 
     \item place the system.arc file in the same directory of the \textcolor{green}{from\_txyz\_to\_gen} executable and launch it as \textit{./from\_txyz\_to\_gen}
 \end{enumerate}
-The script generates input.data file for the n2p2 containing all the structures. The definition of every structure starts with a short header:
+The script generates input.data file for the n2p2. The definition of each frame starts with a short header:
+\vspace{0.5cm}
 
- begin \\
+ \noindent begin \\
  comment \\
  lattice 17.612 0.0 0.0 \\
  lattice 0.0 17.612 0.0 \\
  lattice 0.0 0.0 17.612 \\
 
-"begin" and "comment" are present at the beginning of every new structure. "lattice" defines the dimension of the box. The units of the box and Cartesian coordinates are converted to Bohr.
+\noindent "lattice" defines the dimension of the box in Bohr.
 Each atom of the structure is defined as: \\ \\
  atom \hspace{0.5cm}  -4.367  \hspace{0.5cm}      5.267    \hspace{0.5cm}    4.603  \hspace{0.5cm}    O \hspace{0.5cm} 0 0 \hspace{0.5cm} 0.0 0.0 0.0 \\ \\
-The keyword "atom" specify that the line corresponds to one atom, -4.367, 5.267, 4.603 are the xyz coordinates of the atom, O is the element label, the following two columns 0 0 are not used  and, finally, the last three columns 0.0 0.0 0.0 are the xyz force components acting on the atom. At this example, forces are set to 0.0 since they are not used.
+The keyword "atom" specifies that the line corresponds to one atom, -4.367, 5.267, 4.603 are the xyz coordinates of the atom in Bohr, O is the element label, the following two columns 0 0 are not used. Finally, the last three columns 0.0 0.0 0.0 are the xyz force components acting on the atom. In this example, forces are set to 0.0 since they are not used.
+\vspace{0.5cm}
 
-The file ends with: 
+ \noindent The frame ends with: 
+\vspace{0.5cm}
 
- energy 0.000 \\
+ \noindent energy 0.000 \\
  charge 0.0 \\
  end \\
 
-where "energy" is the reference total energy of the system, "charge" is the total charge of the system, and "end" closes the definition of the structure. 
+\noindent where "energy" is the reference total energy of the system, "charge" is the total charge of the system, and "end" closes the definition of the structure. 
 
 \begin{mybox1}{Units in n2p2}
-\Warning As indicated on the n2p2 website, the units correspond to the physical units defined in the input files. As we are combining several different codes which might have different unit specifications, keep track on the units and stay consistent within the workflow.
+\Warning As indicated on the n2p2 website, the units correspond to the physical units defined in the input files. As we combine several codes with possibly different unit specifications, keep track of the units and stay consistent within the workflow.
 
-In the inputs for n2p2, we use units as:
+In the inputs for n2p2, we use:
 \begin{enumerate}
     \item lattice: \textbf{Bohr}
     \item x/y/z positions: \textbf{Bohr}
@@ -417,39 +369,57 @@ In the inputs for n2p2, we use units as:
 \textcolor{red}{The conversion from Angström to Bohr is done by a multiplication by a factor \textbf{1.88973}}
 \end{mybox1}
 
-The next file to prepare is the \textbf{input.nn} file, which corresponds to the parameters given to parametrize our Neural Network. It is made off three parts:
+All settings and parameters for the training of NNP are specified in \textbf{input.nn} file. It contains three main parts:
 \begin{enumerate}
     \item GENERAL NNP SETTINGS
     \item ADDITIONAL SETTINGS FOR TRAINING
-    \item SYMFUNCTIONS
+    \item SYMMETRY FUNCTIONS
 \end{enumerate}
-GENERAL NNP SETTINGS correspond to the general settings we give to the Neural Network, as the name and number of elements, the number of layers and nodes, activation function for each hidden layer and output layer, etc. \\
-ADDITIONAL SETTINGS FOR TRAINING are complementary information enabling to parametrize the neural network. \\
-As points 1 and 2 are often already fixed by using some conventional parameters used in previous work, the last thing to generate is the symmetry functions (symfunctions). In our case we employ Behler--Parrinello atomic symmetry functions (ASFs) as an input to a feed--forward neural network. We have to generate them for atoms O and H, we thus employ the python script \textcolor{red}{symfun\_gen.py} by typing in the terminal:
+
+GENERAL NNP SETTINGS specify the general set-up of the neural network, for instance, a number of the elements, layers and nodes, cut-offs, scaling normalization, etc.
+
+ADDITIONAL SETTINGS FOR TRAINING define explicitly the parameters of the training as the number of epochs, fraction of energies used in the training, and type of the optimizing algorithm. 
+
+The last part defines the symmetry functions sets used in training. While the parameters for the training can be found in the literature and possible modification directly depend on the simulated system, the symmetry functions are often built completely from scratch and require careful selection.
+
+The n2p2 currently supports Behler-Parrinello types of symmetry functions (radial, angular, wide angular, for definition see Ref. \citenum{behl11jcp}), their weighted variants (Ref. \citenum{Gastegger2018}) and polynomial symmetry functions (Ref. \citenum{Bircher2021}). In this tutorial, we use standard Behler-Parrinello functions.
+
+The initial set of the symmetry function can be generated, for example, by a \textit{symfunc\_paramgen.py} code by Florian Buchner available at \url{https://github.com/flobuch/n2p2/tree/symfunc_paramgen}. Jupyter notebook with an example of the use of a the code is provided at \url{https://github.com/flobuch/n2p2/blob/symfunc_paramgen/tools/python/symfunc_paramgen/examples/example.ipynb}.
+
+For the NNP of water box, we generate set of radial symmetry functions with cutoff $r_c = 4, 8, 12$ Bohr and $N = 8$ and two sets of angular symmetry functions following the protocol describe in Ref. \citenum{Imbalzano2018}.  Store the symmetry functions in one file \textit{e.g.},  asfs.txt and append it at the end of the input.nn.
+
 \begin{center}
-\mybox{\textit{python symfun\_gen.py $>$ asfs.txt}}
+\mybox{\textit{cat asfs.txt $>>$ input.nn}}
 \end{center}
-Without any arguments, \textcolor{red}{symfun\_gen.py} generates the data by default: ASFs for only H atom, with a cutoff of 12.0 Bohr and a delta of 0.05. If you want more (as it surely the case), please add in the sumbission line the following different options:
-\begin{itemize}
-    \item -e: the name of elements we want the symmetry functions (default: H) (example in this case: -e H O)
-    \item -c: the cutoff for the symmetry functions (default: 12.0) (example in this case: -c 14.0)
-    \item -d: the ratio between the minimum sigma of the gaussian and the cutoff. It determines the accuracy with which you sample the space. (default: 0.05) (example in this case: -d 0.2)
-\end{itemize}
-According to these parameters and the system we want to use, the submission line for \textcolor{red}{symfun\_gen.py} becomes:
-\begin{center}
-overleaf color boxex grey \mybox{\textit{python symfun\_gen.py -e H O -c 14.0 -d 0.2 $>$ asfs.txt}}
-\end{center}
-ASFs are thus generated and stocked in the asfs.txt file, which could then be concatenated to the input.nn as:
-\begin{center}
-\mybox{\textit{cat input.nn asfs.txt $>$ toto ; mv toto input.nn}}
-\end{center}
-We thus have two initial files:
+
+%Initial set of the symmetry function can be generate by symmetry\_functions.py as
+
+%\begin{center}
+%\mybox{\textit{python symmetry\_functions.py $>$ asfs.txt}}
+%\end{center}
+%Without any arguments, \textcolor{red}{symfun\_gen.py} generates the data by default: ASFs for only H atom, with a cutoff of 12.0 Bohr and a delta of 0.05. If you want more (as it surely the case), please add in the sumbission line the following different options:
+%\begin{itemize}
+%    \item -e: the name of elements we want the symmetry functions (default: H) (example in this case: -e H O)
+%    \item -c: the cutoff for the symmetry functions (default: 12.0) (example in this case: -c 14.0)
+%    \item -d: the ratio between the minimum sigma of the gaussian and the cutoff. It determines the accuracy with which you sample the space. (default: 0.05) (example in this case: -d 0.2)
+%\end{itemize}
+
+%According to these parameters and the system we want to use, the submission line for \textcolor{red}{symfun\_gen.py} becomes:
+%\begin{center}
+%overleaf color boxex grey \mybox{\textit{python symfun\_gen.py -e H O -c 14.0 -d 0.2 $>$ asfs.txt}}
+%\end{center}
+
+%ASFs are thus generated and stored in the asfs.txt file, which is then appended to the input.nn as
+%\begin{center}
+%\mybox{\textit{cat asfs.txt $>>$ input.nn}}
+%\end{center}
+
+The initial input files needed for the training are therefore:
 \begin{itemize}
     \item \textbf{input.data}
-    \item \textbf{input.nn}
+    \item \textbf{input.nn}.
 \end{itemize}
-which are the base to launch n2p2 computations.
-\\
+
 \begin{mybox3}{Output Files}
 \begin{itemize}
     \item \textbf{input.data}
@@ -457,7 +427,7 @@ which are the base to launch n2p2 computations.
 \end{itemize}
 \end{mybox3}
 %
-\subsubsection{Launching first computations with n2p2}
+\subsubsection{Selection of a subset of descriptors}
 \begin{mybox2}{{Input Files, Executables and Scripts}}
 \begin{minipage}[c]{0.5\linewidth}
 \includegraphics[scale=0.1]{n2p2.png}
@@ -472,55 +442,67 @@ which are the base to launch n2p2 computations.
 \end{itemize}
 \end{minipage}
 \end{mybox2}
-The first step, once initial files .data and .nn are ready, is to launch the scaling of our neural network. To perform this task you could place in the same directory the .data and .nn files and type in your terminal:
+%The first step, once initial files .data and .nn are ready, is to launch the scaling of our neural network. To perform this task you could place in the same directory the .data and .nn files and type in your terminal:
+
+Using the symfunc\_paramgen tool, we generated 192 radial and 768 angular symmetry functions, \textit{i.e.} 480 SF per element. The goal of this section is to selected small subset of the SF which will be used for the training of the NNPs. Following the benchmark and recommendations discussed in Ref. \citenum{Imbalzano2018}, we use CUR decomposition scheme to select 64 unique symmetry functions per element. The details of CUR and more advanced CovCUR techniques can be found in Ref. \citenum{maho-drin09pnas,Imbalzano2018,Cersonsky2021}. 
+
+To evaluate the symmetry functions over the geometries, we use \textit{nnp-scaling} tool in n2p2. However, the number of the symmetry function is huge and the storage of the values over the whole set of structures would be memory demanding., We therefore firstly randomly select subset of structures from the original input.data file using \textit{nnp-select} tool.
+
 \begin{center}
-\mybox{\textit{mpirun -n 32 nnp-scaling 500 $>$ logfile}}
+\mybox{\textit{nnp-select random 0.05 123}}
 \end{center}
-\begin{mybox4}{Libraries}
-\begin{itemize}
-    \item module load intel intel-mpi intel-mkl gsl eigen is adviced !
-    \item module load n2p2 if available !
-    \item specify your n2p2 libraries path as: \\ "export LD\_LIBRARY\_PATH=\$LD\_LIBRARY\_PATH:$<$path-to-your-n2p2-lib$>$"
-\end{itemize}
-\end{mybox4}
-3 output files are thus generated:
-\begin{enumerate}
-    \item \textbf{logfile}: all instructions occuring in the nnp--scaling procedure are listed in this file. It is also very useful as it evaluates the memory for all structures. \textbf{A rule of thumb is that it should not exceed 100 GB.}
-    \item \textbf{function.data}: all the functions for our system are listed in this file, which is very memory consuming. So do not try to open it manually.
-    \item \textbf{scaling.data}: nnp--scaling procedure compute all symmetry functions for all atoms once and store statistics about them in this file, required after for training.
-\end{enumerate}
-Among all the ASFs generated, it is now essential to choose a reasonably as well as nonredundant set of ASFs which describe as accurately as possible our system. This task is often the most delicate and time--consuming aspects in the construction of a Behler--Parinnello style MLP. We thus decided to automatize this selection using CUR description and implemented in a home script named \textcolor{red}{CurSel-integral.py}. You could just place this script in the same direction as function.data and launch it as:
+
+Keyword \textit{random} indicates the random selection of the structures, 0.05 corresponds to the percentage of selection and 123 is the seed for random generator. Modify the percentage so it corresponds to roughly 1000 structures.
+
+Finally, evaluate the symmetry functions by \textit{nnp-scaling}. As this procedure ca be computationally demanding, it is advisable to submit it on cluster in parallel, for example:
+
 \begin{center}
-\mybox{\textit{python CurSel-integral.py function.data logfile -n 64 --landmarks 1000 --prefix cursel $>$ out}}
+\mybox{\textit{mpirun -n 8 nnp-scaling 500 $>$ logfile}}
 \end{center}
-As before, 3 output files are generated:
-\begin{enumerate}
-    \item \textbf{out}: the output file of the procedure.
-    \item \textbf{cursel.def}: the chosen symmetry functions.
-    \item \textbf{cursel.landmarks}: the frame's number selected.
-\end{enumerate}
-The \textbf{cursel.def} will be useful in the STEP 4 and \textbf{cursel.landmarks} in STEP 3. \\
-\begin{mybox1}{Checking of the ASFs !}
-\Warning Generated ASFs  should be checked by plotting them in an external software (gnuplot) in order to check if they well cover the space or not. A good balance between G2 and G3 has also to be respected !
-\end{mybox1}
-\begin{mybox1}{Stability of NNP !}
-\Warning Although a good balance between G2 and G3 is needed, some other parameters are important to consider. One of them is the number of structures within the dataset. In our case, with only 1000 structures we can not wait for a stable NNP as the number of structures should not be sufficient enough. However, we kept this number to ensure a good ratio between understanding and short computational time for methodological understanding within this tutorial. However, this setup should not be used for production. If the user is then, after this tutorial, interested to use it for production, a setup used recently for production is provided at the end of this tutorial ! 
-\end{mybox1}
 
 
-\begin{mybox3}{Output Files}
-\begin{itemize}
-    \item logfile
-    \item function.data
-    \item scaling.data
-    \item out
-    \item \textbf{cursel.def}
-    \item \textbf{cursel.landmarks}
-\end{itemize}
-\end{mybox3}
+\textit{nnp-scaling} generates three output files:
+\begin{enumerate}
+    \item \textbf{logfile}: contains list of the symmetry functions and their parameters. \textbf{Needed for the CUR selection.}
+    \item \textbf{function.data}: the evaluation of all the symmetry functions over tha data in \textit{input.data}. \textbf{Needed for CUR selection.}
+    \item \textbf{scaling.data}: statistic of the symmetry functions, \textit{i.e.}, the minimum and maximum values, mean and sigma.
+\end{enumerate}
+
+TO BY ADDED!!
+%Among all the ASFs generated, it is now essential to choose a reasonably as well as nonredundant set of ASFs which describe as accurately as possible our system. This task is often the most delicate and time--consuming aspects in the construction of a Behler--Parinnello style MLP. We thus decided to automatize this selection using CUR description and implemented in a home script named \textcolor{red}{CurSel-integral.py}. You could just place this script in the same direction as function.data and launch it as:
+%\begin{center}
+%\mybox{\textit{python CurSel-integral.py function.data logfile -n 64 --landmarks 1000 --prefix cursel $>$ out}}
+%\end{center}
+%As before, 3 output files are generated:
+%\begin{enumerate}
+%    \item \textbf{out}: the output file of the procedure.
+%    \item \textbf{cursel.def}: the chosen symmetry functions.
+%    \item \textbf{cursel.landmarks}: the frame's number selected.
+%\end{enumerate}
+
+%The \textbf{cursel.def} will be useful in the STEP 4 and \textbf{cursel.landmarks} in STEP 3. \\
+%\begin{mybox1}{Checking of the ASFs !}
+%\Warning Generated ASFs  should be checked by plotting them in an external software (gnuplot) in order to check if they well cover the space or not. A good balance between G2 and G3 has also to be respected !
+%\end{mybox1}
+
+%\begin{mybox1}{Stability of NNP !}
+%\Warning Although a good balance between G2 and G3 is needed, some other parameters are important to consider. One of them is the number of structures within the dataset. In our case, with only 1000 structures we can not wait for a stable NNP as the number of structures should not be sufficient enough. However, we kept this number to ensure a good ratio between understanding and short computational time for methodological understanding within this tutorial. However, this setup should not be used for production. If the user is then, after this tutorial, interested to use it for production, a setup used recently for production is provided at the end of this tutorial ! 
+%\end{mybox1}
+
+
+%\begin{mybox3}{Output Files}
+%\begin{itemize}
+%    \item logfile
+%    \item function.data
+%    \item scaling.data
+%    \item out
+%    \item \textbf{cursel.def}
+%    \item \textbf{cursel.landmarks}
+%\end{itemize}
+%\end{mybox3}
 %
+
 \subsection{Step 3: Hybrid DFT force--energy computations}
-\subsubsection{Extracting structures of interest}
 \begin{mybox2}{{Input Files, Executables and Scripts}}
 \begin{minipage}[c]{0.5\linewidth}
 \includegraphics[scale=0.1]{Python-fortran.jpeg}
@@ -535,19 +517,19 @@ The \textbf{cursel.def} will be useful in the STEP 4 and \textbf{cursel.landmark
 \end{itemize}
 \end{minipage}
 \end{mybox2}
-From the cursel.landmarks file generated in the previous step, we need to extract structures in order to perform single point reference computations. From the input.data file you could apply a home script \textcolor{red}{selection.f90} as:
+
+From the cursel.landmarks file generated in the previous step, we need to extract structures for the single point reference computations, for example using \textcolor{red}{selection.f90}:
+
 \begin{center}
 \mybox{\textit{gfortran selection.f90 -o selection ; ./selection}}
 \end{center}
-It will generate a newfile labeled as \textbf{new--input.data} and containing the 1000 selected structures from the CUR procedures. 
+It will generate a new file \textbf{new--input.data} containing the 1000 structures selected by the FPS. In this tutoria, we use cp2k code to generate energy and forces of the water box. However, the reference computations for the NNP in general do not need to be periodic. The geometry input files for cp2k can be generated by: 
 
-The next steps is now to extract each structures and to place them in an individual file for enabling cp2k computations. This procedure corresponds, once again, to post--processing and could be performed in a two step way following this procedure:
 \begin{enumerate}
     \item \textit{gfortran from\_data\_to\_xyz.f90 -o from\_data\_to\_xyz ; ./from\_data\_to\_xyz}
     \item \textit{gfortran from\_xyz\_to\_cp2k.f90 -o from\_xyz\_to\_cp2k ; ./from\_xyz\_to\_cp2k}
 \end{enumerate}
-You obtain a series of 1000 files named \$i-cp2k.xyz, which corresponds to the 1000 initial structure files for cp2k computations.
-\\
+
 \begin{mybox3}{Output Files}
 \begin{itemize}
     \item \textbf{\$i-cp2k.xyz}
@@ -567,49 +549,42 @@ You obtain a series of 1000 files named \$i-cp2k.xyz, which corresponds to the 1
 \end{itemize}
 \end{minipage}
 \end{mybox2}
-We firstly need to prepare one directory for one calculation. This task could be automatized using the \textcolor{red}{prep-file.sh} bash file which automatically create you 1000 directories, one per frame. Each of them contain one .xyz file and .cp2k file. The input.cp2k file is where we place specific keywords to parametrize the cp2k computations. In our case, we are using the CP2K 6.1 version to perform reference energies and forces at the PBE--D3BJ level of theory. All elements are described with the TZV2P--MOLOPT basis set with cores represented by the dual--space Goedecker--Teter--Hutter pseudopotentials (GTH PBE). The plane--wave cutoff is set to 700 Ry with a relative cutoff of 70 Ry. All computations employ a Coulomb operator truncated at R=6 \AA~ and the auxilary de,sity matrix method with a cpFIT3 fiiting basis set. \\ \\
-To launch a cp2k calculation, just type in the directory of your .xyz and .cp2k files the following command:
+
+The cp2k computations can be automatized by \textcolor{red}{prepare.sh} script which automatically creates directories for the computations (one per structure). The directories contain geometry files and inputs to cp2k. Here, we use the CP2K 6.1 version to perform reference energies and forces computations at the PBE--D3BJ level of theory. All elements are described with the TZV2P--MOLOPT basis set with cores represented by the dual--space Goedecker--Teter--Hutter pseudopotentials (GTH PBE). The plane--wave cutoff is set to 700 Ry with a relative cutoff of 70 Ry.\\
+
+Launch a cp2k computations following the installation of your machine. For example:
 \begin{center}
 \mybox{\textit{cp2k.popt -i input.cp2k -o output.cp2k}}
 \end{center}
-A series of files will be generated, but the most important in our case is the \textbf{output.cp2k} file. This task has to be performed for the 1000 structures, \textbf{each calculation is taken 3 minutes on 28 CPUs approximatively}. 
+The output of the computation including energy and forces is in the output.cp2k file.
 \\
 \begin{mybox3}{Output Files}
 \begin{itemize}
-    \item \textbf{output.cp2k} 1000 times !
+    \item \textbf{output.cp2k} 
 \end{itemize}
 \end{mybox3}
 %
-\subsubsection{Extraction of forces and energies}
+\subsubsection{Extraction of energy and forces}
 \begin{mybox2}{{Input Files, Executables and Scripts}}
 \begin{minipage}[c]{0.5\linewidth}
 \includegraphics[scale=0.1]{Python-fortran.jpeg}
 \end{minipage}
 \begin{minipage}[c]{0.5\linewidth}
 \begin{itemize}
-    \item output.cp2k 1000 times !
-    \item \textcolor{red}{extraction.tcl}
-    \item \textcolor{red}{trait.sh}
+    \item output.cp2k
+  \item \textcolor{red}{process.sh}
 \end{itemize}
 \end{minipage}
 \end{mybox2}
-From each output.cp2k generated in the previous step, we need now to extract the potential energy term and x/y/z component forces acting on each atoms of the structure. A classical tcl file named \textcolor{red}{extraction.tcl} has been designed to automatized this task. In the directory of your output.cp2k you could just launch:
-\begin{center}
-\mybox{\textit{tclsh extraction.tcl}}
-\end{center}
-It will generate an outputfile named \textbf{output-forces.dat}. The procedure can be easily automatized for the 1000 directories by using a classical bash file named \textcolor{red}{trait.sh} and launched in the directory of the 1000 directories (and one copy of the extraction.tcl file)  as:
-\begin{center}
-\mybox{\textit{sh trait.sh}}
-\end{center}
-It will generate a final output named \textbf{forces\_and\_energies.dat}, containing all the information of your 1000 structures. 
+The database of the energy and forces can be created using the process.sh scrip. The resulting information is saved in database\_forces-pbe0.xyz file.
 \\
 \begin{mybox3}{Output Files}
 \begin{itemize}
-    \item \textbf{forces\_and\_energies.dat}
+    \item \textbf{database\_forces-pbe0.xyz}
 \end{itemize}
 \end{mybox3}
 %
-\subsubsection{Updating the input.data file}
+\subsubsection{Final input.data file}
 \begin{mybox2}{{Input Files, Executables and Scripts}}
 \begin{minipage}[c]{0.5\linewidth}
 \includegraphics[scale=0.1]{Python-fortran.jpeg}
@@ -617,101 +592,91 @@ It will generate a final output named \textbf{forces\_and\_energies.dat}, contai
 \begin{minipage}[c]{0.5\linewidth}
 \begin{itemize}
     \item input.data
-    \item forces\_and\_energies.dat
-    \item \textcolor{red}{update.f90}
+    \item database\_forces-pbe0.xyz
+    %\item \textcolor{red}{update.f90}
 \end{itemize}
 \end{minipage}
 \end{mybox2}
-After obtaining forces and energies for each of our structures, we need to inject them within our initial input.data file. A home script named \textcolor{red}{update.f90} has been designed to perform this task and could be launched in the same directory as the input.data and forces\_and\_energies.dat files as:
+Finally, with the database of energies and forces for the training structures, we create the final input.data file which is used for  the training. This can be done, for instance, by the XXX code.
 \begin{center}
 \mybox{\textit{gfortran update.f90 ; ./a.out}}
 \end{center}
-You now have to replace your old input.data by the \textbf{new-input.data} generated as the output of your script for the next step.
-\\
+%You now have to replace your old input.data by the %\textbf{new-%input.data} generated as the output of your script for the %next step.
+%\\
 \begin{mybox3}{Output Files}
 \begin{itemize}
-    \item \textbf{input.data} (renamed after being new-input.data)
+    \item \textbf{input.data} 
 \end{itemize}
 \end{mybox3}
 %
-\subsection{Step 4: Neural Network Potential training}
-\subsubsection{Regenerate new scaling.data file}
+\subsection{Step 4: Neural Network Potentials}
+%\subsubsection{New scaling.data file}
 \begin{mybox2}{{Input Files, Executables and Scripts}}
 \begin{minipage}[c]{0.5\linewidth}
 \includegraphics[scale=0.1]{n2p2.png}
 \end{minipage}
 \begin{minipage}[c]{0.5\linewidth}
 \begin{itemize}
-    \item input.data
-    \item input.nn
-    \item \textcolor{green}{nnp--train}
+  \item input.data
+   \item input.nn
+     \item \textcolor{green}{nnp--scaling}
+   \item \textcolor{green}{nnp--train}
 \end{itemize}
 \end{minipage}
 \end{mybox2}
-Before proceeding to the Neural Network training a new scaling.data has to be generated, with use of the new files created during the previous steps:
-\begin{itemize}
-    \item input.data, coming from the "Updating the input.data file";
-    \item input.nn, coming from "Preparing files for n2p2"
-\end{itemize}
-You create a new directory encompassing these two files and applied the \textcolor{green}{nnp--scaling} procedure similarly to the point "Preparing files for n2p2" in order to generate the right scaling.data file. 
-\\
-\begin{mybox3}{Output Files}
-\begin{itemize}
-    \item \textbf{scaling.data}
-\end{itemize}
-\end{mybox3}
+The last file we need to prepare for the training of the neural network is the preparation of the new scaling.data file. As in the previous case, we generate it using nnp-scaling in n2p2.
+%Before proceeding to the Neural Network training a new scaling.data %has to be generated, with the use of the new files created during the %previous steps:
+%\begin{itemize}
+ %   \item input.data, coming from the "Updating the input.data file";
+  %  \item input.nn, coming from "Preparing files for n2p2"
+%\end{itemize}
+%You create a new directory encompassing these two files and applied %the \textcolor{green}{nnp--scaling} procedure similar to the point %"Preparing files for n2p2" to generate the right scaling.data file. 
+%\\
+%begin{mybox3}{Output Files}
+%begin{itemize}
+%    item \textbf{scaling.data}
+%end{itemize}
+%end{mybox3}
 %
-\subsubsection{Training our Neural Network}
-\begin{mybox2}{{Input Files, Executables and Scripts}}
-\begin{minipage}[c]{0.5\linewidth}
-\includegraphics[scale=0.1]{n2p2.png}
-\end{minipage}
-\begin{minipage}[c]{0.5\linewidth}
-\begin{itemize}
-    \item input.data
-    \item input.nn
-    \item scaling.data
-    \item \textcolor{green}{nnp--train}
-\end{itemize}
-\end{minipage}
-\end{mybox2}
-Once this step done, you create another directory encompassing this time:
-\begin{itemize}
-    \item input.data
-    \item input.nn
-    \item scaling.data
-\end{itemize}
-and you launch your training procedure as:
+%\subsubsection{Training of the Neural Network}
+%\begin{mybox2}{{Input Files, Executables and Scripts}}
+%\begin{minipage}[c]{0.5\linewidth}
+%\includegraphics[scale=0.1]{n2p2.png}
+%\end{minipage}
+%\begin{minipage}[c]{0.5\linewidth}
+%\begin{itemize}
+ %   \item input.data
+  %  \item input.nn
+   % \item scaling.data
+   % \item \textcolor{green}{nnp--train}
+%\end{itemize}
+%\end{minipage}
+%\end{mybox2}
+Finally, the training procedures can be launched. Depending on the system, the process can be parallelized and submitted, for example, as:
 \begin{center}
 \mybox{\textit{mpirun -n 32 nnp--train $>$ output.txt}}
 \end{center}
-\begin{mybox4}{Libraries}
-\begin{itemize}
-    \item module load intel intel-mpi intel-mkl gsl eigen is adviced !
-    \item specify your n2p2 libraries path as: \\ "export LD\_LIBRARY\_PATH=\$LD\_LIBRARY\_PATH:$<$path-to-your-n2p2-lib$>$"
-\end{itemize}
-\end{mybox4}
-Several files are created, but the most interesting are:
-\begin{itemize}
-    \item \textbf{output.txt}: it is the main output file of the calculation. Initial parameters for the training procedure is listed to avoid some troubles in the initial setting. Sum of the training computations each epoch are listed with for each one the calculation time. 
-    \item \textbf{learning--curve.out}: this is the main file to easily plot the different learning curves using an external software.
-    \item \textbf{weights}: for each atom a weight file is created. For instance as H is 1, for the epoch 120 you should obtain "weights.001.120.out". These files are a sum of all the weights used in the Neural Network connections (see the few reminder part on the NN). These files are crucial when the procedure should be restarted (see next subpart). 
-\end{itemize}
-Be focused now on the \textbf{learning--curve.out} file. It is presented in 5 columns:
+%\begin{mybox4}{Libraries}
+%\begin{itemize}
+ %   \item module load intel intel-mpi intel-mkl gsl eigen is adviced !
+  %  \item specify your n2p2 libraries path as: \\ "export LD\_LIBRARY%\_PATH=\$LD\_LIBRARY\_PATH:$<$path-to-your-n2p2-lib$>$"
+%\end{itemize}
+%\end{mybox4}
+The neural network potentials are trained to achieve as low RMSE on the test set as possible. The data to monitor the training behavior of the NNP are provided in the \textit{learning-curve.out} file. The file contains:
 \begin{enumerate}
-    \item Column 1: the current epoch
+    \item Column 1: The index of the current epoch
     \item Column 2: RMSE of training energies per atom (physical units)
     \item Column 3: RMSE of test energies per atom (physical units)
     \item Column 4: RMSE of training forces (physical units)
     \item Column 5: RMSE of test forces (physical units)
 \end{enumerate}
-To ensure the stability of our NN, we have to check the RMSE values obtained in function of the epoch. This could be performed in two steps:
-\begin{enumerate}
-    \item Firstly, we check the quality of the energy prediction: a good compromise should be an error around 1 meV/atom. If it is higher, be careful and you need to check the stability of your NN when you will branch it to your MD.
-    \item Secondly, we check the quality of the forces prediction: as forces are more complicated to be predicted compared to the energy, a good compromise between accuracy and prediction should be an error around 150 meV/atom. As for the energy, if its higher you need also to check the stability of your NN when it will be branched to your MD. 
-\end{enumerate}
-Results obtained in this file are in the cp2k units, so in our case it is in a.u (atomic units, you could easily check it in an output.cp2k you obtained previously). It is thus desirable to translate a.u in meV/atom. \\
-Conversion: 1 a.u = 627.5 kcal/mol = 27.211 eV, so to pass from a.u to meV the factor to apply is 27211 for the energy. Concerning the forces, a factor 2 has to be added. As results are average taken on the atoms, the final result is in meV/Atom (so do not need to divide it by the number of atoms). Using an external software to plot the curves (python, gnuplot, xmgrace, excel, ...) you should be able to obtain these curves depicted on Figure. 
+
+ The physical units correspond to the units used in the training data. In our case, energy is specified in Hartree (a.u.) and forces in Hartree per Bohr. The training errors discussed in the literature are commonly specified in the meV and meV/$\AA$ or in kcal/mol and kcal/mol/$\AA$. The conversion factors are: 1 a.u = 627.5 kcal/mol = 27.211 eV, 1 Bohr = 0.529177 $\AA$. The learning curves can be plotted in Gnuplot to visualize the training progress. For example, the plotting of the RMSE in error in energy for the training set and test set:
+
+\begin{center}
+\mybox{\textit{p 'learning-curve.out' u 1:(\$2*1000*27.11) w l, 'learning-curve.out' u 1:(\$3*1000*27.11) w l }}
+\end{center}
+
 \begin{figure}
     \centering
     \includegraphics[scale=0.2]{energy.png}
@@ -719,39 +684,9 @@ Conversion: 1 a.u = 627.5 kcal/mol = 27.211 eV, so to pass from a.u to meV the f
     \caption{Energy (direct) and forces (direct) learning curves. The training has been performed on 800 structures and testing on 200 structures.}
     \label{fig:my_label}
 \end{figure}
-\\
-\begin{mybox1}{Ratio between training and testing}
-\Warning Be careful between the ratio taken into account in the training procedure, especially when you have a small database. The keyword in the input.nn responsible for such a parametrization is \textit{test\_fraction} and is set to 0.2 in our case. It means that 80\% of our total structures (2400 in this case) will be used for training while 20\% (600 in this case) will be used for testing. Normally, no strong differences should be observed between training and testing curves.  
-\end{mybox1}
 
-\begin{mybox1}{Interpretation tool !}
-\begin{itemize}
-    \item Errors for the energy and forces predictions are comprised around 1meV/Atom and 75meV/Atom. This is good when we compare it to our reference step (1 meV/Atom and 150 meV/Atom). 
-    \item No differences are observed between testing and training curves for the energy and forces. 
-\end{itemize}
-\end{mybox1}
+The Behler-Parinello NNP can often achieve RMSE around 1 meV/atom in energy and  less than 100 meV/$\AA$ in forces. The RMSE obtained for the water box show similar trend and can be tested in molecular dynamics.
 
-\begin{mybox3}{Output Files}
-\begin{itemize}
-    \item \textbf{learning-curve.out}
-    \item \textbf{weights.001.001000.out}
-    \item \textbf{weights.008.001000.out}
-\end{itemize}
-\end{mybox3}
-%
-\subsubsection{How to restart a Neural Network training ?}
-%
-Imagine either the simulation time was not enough to complete your calculation or you need to add more than the initial number of epoch, it should be desirable to be able to restart our calculation from the last iteration (here in this case epoch=1000). To perform this task, follow this procedure:
-\begin{enumerate}
-    \item create a new directory
-    \item copy the input.data input.nn scaling.data weights.001.0001000.out weights.008.0001000.out files in this new directory
-    \item move to this new directory
-    \item add (or delete the \# symbole) the following keyword in the ADDITIONAL SETTINGS FOR TRAINING: \textit{use\_old\_weights\_short}
-    \item launch your calculation similarly to the previous one using the \textcolor{green}{nnp--train} executable.
-\end{enumerate}
-%
-%
-%
 \newpage
 \fancyhead[L]{5. NNP--MD}
 \section{Part 2: Link the direct NNP to Molecular Dynamics}
@@ -1089,4 +1024,8 @@ Once all the structures extracted, we can grab them in order to generate the fir
 %
 \subsection{How to efficiently train a good NNP ?}
 Once the initial dataset was created, the other important part of the work is to design the architecture for future NNP.
+
+\bibliographystyle{achemso}
+\bibliography{bib}
+
 \end{document}
