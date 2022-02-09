@@ -1362,3 +1362,74 @@ year = {2007}
   journal = {J. Chem. Phys.},
   number = {7}
 }
+
+@article{Bircher2021,
+abstract = {The prediction of chemical properties using machine learning techniques calls for a set of appropriate descriptors that accurately describe atomic and, on a larger scale, molecular environments. A mapping of conformational information on a space spanned by atom-centred symmetry functions (SF) has become a standard technique for energy and force predictions using high-dimensional neural network potentials (HDNNP). An appropriate choice of SFs is particularly crucial for accurate force predictions. Established atom-centred SFs, however, are limited in their flexibility, since their functional form restricts the angular domain that can be sampled without introducing problematic derivative discontinuities. Here, we introduce a class of atom-centred SFs based on polynomials with compact support called polynomial symmetry functions (PSF), which enable a free choice of both, the angular and the radial domain covered. We demonstrate that the accuracy of PSFs is either on par or considerably better than that of conventional, atom-centred SFs. In particular, a generic set of PSFs with an intuitive choice of the angular domain inspired by organic chemistry considerably improves prediction accuracy for organic molecules in the gaseous and liquid phase, with reductions in force prediction errors over a test set approaching 50% for certain systems. Contrary to established atom-centred SFs, computation of PSF does not involve any exponentials, and their intrinsic compact support supersedes use of separate cutoff functions, facilitating the choice of their free parameters. Most importantly, the number of floating point operations required to compute polynomial SFs introduced here is considerably lower than that of other state-of-the-art SFs, enabling their efficient implementation without the need of highly optimised code structures or caching, with speedups with respect to other state-of-the-art SFs reaching a factor of 4.5 to 5. This low-effort performance benefit substantially simplifies their use in new programs and emerging platforms such as graphical processing units. Overall, polynomial SFs with compact support improve accuracy of both, energy and force predictions with HDNNPs while enabling significant speedups compared to their well-established counterparts.},
+archivePrefix = {arXiv},
+arxivId = {2010.14414},
+author = {Bircher, Martin P. and Singraber, Andreas and Dellago, Christoph},
+doi = {10.1088/2632-2153/abf817},
+eprint = {2010.14414},
+file = {:home/veronika/Downloads/Bircher_2021_Mach._Learn. _Sci._Technol._2_035026(1).pdf:pdf},
+issn = {26322153},
+journal = {Mach. Learn. Sci. Technol.},
+keywords = {Computational chemistry,Computational physics,Condensed matter,Descriptors,High-dimensional neural network potential (HDNNP),Symmetry functions},
+number = {3},
+pages = {035026},
+title = {{Improved description of atomic environments using low-cost polynomial functions with compact support}},
+volume = {2},
+year = {2021}
+}
+@article{Gastegger2018,
+abstract = {We introduce weighted atom-centered symmetry functions (wACSFs) as descriptors of a chemical system's geometry for use in the prediction of chemical properties such as enthalpies or potential energies via machine learning. The wACSFs are based on conventional atom-centered symmetry functions (ACSFs) but overcome the undesirable scaling of the latter with an increasing number of different elements in a chemical system. The performance of these two descriptors is compared using them as inputs in high-dimensional neural network potentials (HDNNPs), employing the molecular structures and associated enthalpies of the 133 855 molecules containing up to five different elements reported in the QM9 database as reference data. A substantially smaller number of wACSFs than ACSFs is needed to obtain a comparable spatial resolution of the molecular structures. At the same time, this smaller set of wACSFs leads to a significantly better generalization performance in the machine learning potential than the large set of conventional ACSFs. Furthermore, we show that the intrinsic parameters of the descriptors can in principle be optimized with a genetic algorithm in a highly automated manner. For the wACSFs employed here, we find however that using a simple empirical parametrization scheme is sufficient in order to obtain HDNNPs with high accuracy.},
+archivePrefix = {arXiv},
+arxivId = {1712.05861},
+author = {Gastegger, M. and Schwiedrzik, L. and Bittermann, M. and Berzsenyi, F. and Marquetand, P.},
+doi = {10.1063/1.5019667},
+eprint = {1712.05861},
+file = {:home/veronika/Downloads/1.5019667(1).pdf:pdf},
+issn = {00219606},
+journal = {J. Chem. Phys.},
+number = {24},
+pages = {241709},
+pmid = {29960372},
+title = {{WACSF - Weighted atom-centered symmetry functions as descriptors in machine learning potentials}},
+url = {http://dx.doi.org/10.1063/1.5019667},
+volume = {148},
+year = {2018}
+}
+
+@article{Imbalzano2018,
+abstract = {Machine learning of atomic-scale properties is revolutionizing molecular modeling, making it possible to evaluate inter-atomic potentials with first-principles accuracy, at a fraction of the costs. The accuracy, speed, and reliability of machine learning potentials, however, depend strongly on the way atomic configurations are represented, i.e., the choice of descriptors used as input for the machine learning method. The raw Cartesian coordinates are typically transformed in "fingerprints," or "symmetry functions," that are designed to encode, in addition to the structure, important properties of the potential energy surface like its invariances with respect to rotation, translation, and permutation of like atoms. Here we discuss automatic protocols to select a number of fingerprints out of a large pool of candidates, based on the correlations that are intrinsic to the training data. This procedure can greatly simplify the construction of neural network potentials that strike the best balance between accuracy and computational efficiency and has the potential to accelerate by orders of magnitude the evaluation of Gaussian approximation potentials based on the smooth overlap of atomic positions kernel. We present applications to the construction of neural network potentials for water and for an Al-Mg-Si alloy and to the prediction of the formation energies of small organic molecules using Gaussian process regression.},
+archivePrefix = {arXiv},
+arxivId = {1804.02150},
+author = {Imbalzano, Giulio and Anelli, Andrea and Giofr{\'{e}}, Daniele and Klees, Sinja and Behler, J{\"{o}}rg and Ceriotti, Michele},
+doi = {10.1063/1.5024611},
+eprint = {1804.02150},
+file = {:home/veronika/.local/share/data/Mendeley Ltd./Mendeley Desktop/Downloaded/Imbalzano et al. - 2018 - Automatic selection of atomic fingerprints and reference configurations for machine-learning potentials.pdf:pdf;:home/veronika/Downloads/1.5024611.pdf:pdf},
+issn = {00219606},
+journal = {J. Chem. Phys.},
+mendeley-groups = {Neural Networks literature,Thesis},
+number = {24},
+pages = {241730},
+pmid = {29960368},
+title = {{Automatic selection of atomic fingerprints and reference configurations for machine-learning potentials}},
+url = {http://dx.doi.org/10.1063/1.5024611},
+volume = {148},
+year = {2018}
+}
+
+
+@article{maho-drin09pnas,
+  title = {{{CUR}} Matrix Decompositions for Improved Data Analysis},
+  author = {Mahoney, Michael W. and Drineas, Petros},
+  year = {2009},
+  month = jan,
+  volume = {106},
+  pages = {697--702},
+  issn = {00278424},
+  doi = {10.1073/pnas.0803205106},
+  url = {http://www.pnas.org/cgi/doi/10.1073/pnas.0803205106},
+  journal = {Proc. Natl. Acad. Sci. USA},
+  number = {3}
+}
