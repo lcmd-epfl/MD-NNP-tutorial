@@ -9,6 +9,7 @@
 %\usepackage{color}
 \usepackage{xcolor}
 \usepackage{amsmath}
+\usepackage[version=3]{mhchem} % Formula subscripts using \ce{}
 % PACKAGE POUR LE WARNING
 \newcommand\Warning{%
  \makebox[1.4em][c]{%
@@ -92,17 +93,15 @@
 \fancyfoot[R]{\today}
 \section{Introduction}
 \fancyhead[L]{1. Introduction}
-This tutorial aims to guide the building of neural network-based potentials (NNPs) and their application in molecular dynamics (MD). As the traditional \textit{ab initio} MD is too computationally demanding to obtain statistically converged simulations of chemical reactions and processes in large systems, the MD with NNPs benefits from the much lower cost of the simulation while the accuracy of the AIMD is conserved.  
+This tutorial aims to guide the building of neural network-based potentials (NNPs) and their application in molecular dynamics (MD). As the \textit{ab initio} MD is too computationally demanding to obtain statistically converged simulations of chemical reactions and processes in large systems, the MD with NNPs benefits from the much lower cost of the simulation while the accuracy of the AIMD is conserved.  
 In this regard, NNPs have been already used in the reactive simulations in the gas phase and aqueous solutions (\textit{e.g.}, in the description of proton transfer and urea hydrolysis). 
 
-\textbf{Part 1} of this tutorial is dedicated to the generation of the Behler-Parrinello NNPs, including the preparation of a robust data set, selection of the descriptors and monitoring of the accuracy of the training. \textbf{Part 2} demonstrates how to use the NNPs using the i--Pi interface to LAMMPS and other codes. Finally, \textbf{Part 3} introduces the concept of baselined NNPs and showcases its advantages compared to NNPs trained directly on DFT data. 
-
-
+\textbf{Part 1} of this tutorial is dedicated to the generation of the Behler-Parrinello NNPs, including the preparation of a robust data set, selection of the descriptors, and monitoring of the accuracy of the training. \textbf{Part 2} demonstrates how to use the NNPs using the i-Pi interface to LAMMPS and other codes. \textbf{Part 3} introduces the concept of baselined NNPs and showcases its advantages compared to NNPs trained directly on DFT data. 
 \fancyhead[L]{2. Neural Networks-based potentials: Crash course}
 
 \section{Neural Networks-based potentials: Crash course}
 
-\textbf{Neural Networks are statistical models which can reproduce complex non-linear functions using large amounts of so-called training points.} The availability of so-called \textit{Big data} in a broad range of human activities resulted in the harvesting of neural networks in the development of game-playing models, speech and text recognition software, or analysis of patients' data in modern health care, to name a few. Recently, the power of NN to reproduce highly complex data has been exploited in the development of a new generation of potentials for molecular dynamics. The Neural Network Potentials (NNPs) are trained to mimic the shape of the corresponding potential energy surface using the \textbf{data sets} containing coordinates and corresponding \textit{ab initio} data (i.e., energy and possibly forces). The resulting NNPs are then used to propagate molecular dynamics with the accuracy of the underlying \textit{ab initio} method but with a fraction of its original cost. Many NN architectures to train the NNPs have been proposed during the last years. In this tutorial, we focus on the training of Behler-Parrinello NNPs based on feedforward NN.  
+\textbf{Neural Networks are statistical models which can reproduce complex non-linear functions using large amounts of the training points.} The availability of so-called \textit{Big data} in a broad range of human activities resulted in the harvesting of neural networks in the development of game-playing models, speech and text recognition software, or analysis of patients' data in modern health care, to name a few. Recently, the power of NN to reproduce highly complex data has been exploited in the development of a new generation of potentials for molecular dynamics. The Neural Network Potentials (NNPs) are trained to mimic the shape of the corresponding potential energy surface using the \textbf{data sets} containing coordinates and corresponding \textit{ab initio} data (i.e., energy and possibly forces). The resulting NNPs are then used to propagate molecular dynamics with the accuracy of the underlying \textit{ab initio} method but with a fraction of its original cost. Many NN architectures to train the NNPs have been proposed during the last years. In this tutorial, we focus on the training of Behler-Parrinello NNPs based on feedforward NN.  
 
 \subsection{Feedforward Neural Networks}
 \begin{figure}[!h]
@@ -149,7 +148,7 @@ In 2007, Behler and Parrinello proposed a solution to this problem by expressing
     E_s = \sum_{i=1}^{N_{atom}} E_i
 \end{equation}
 Starting from the Cartesian coordinates $R$, every atom is represented by a set of atom-centered symmetry functions $G_i$, which describe the atoms' chemical environment within a given cutoff. Each atom is then assigned a feedforward NN yielding the atomic contribution to the total energy. The weights of the NN are identical for atoms of the same element to ensure that the trained NNPs do not depend on the number and order of the atoms.
-%
+
 \subsection{Atom-centered symmetry functions}
 
 Together with the NN topology, the seminal work of Behler and Parrinello introduced also new types of symmetry functions to characterize the local environment of each atom. The so-called Atom-centered symmetry functions (ACSFs)\cite{behl11jcp} are constructed from the positions of the atoms and their closest neighbors. This representation guarantees that the atoms with the same environment yield the same atomic energy contribution which is also translationally and rotationally invariant. 
@@ -181,12 +180,9 @@ The general protocol to construct NNP is as follows:
 For a detailed general tutorial review on Behler-Parrinello NN, see Ref. \citenum{Behler2015tutorial}. 
 
 \newpage
-%
-
 \fancyhead[L]{3. Requirements}
 \section{Requirements}
-This tutorial presents a workflow which requires extensive number of different software packages, scripts and libraries. The versions of the codes used here are listed below.
-
+This tutorial presents a workflow that requires an extensive number of different software packages, scripts, and libraries. The versions of the codes used here are listed below.
 \subsection{Software}
 All the codes are available at GitHub (see the last section of tutorial):
 \begin{itemize}
@@ -196,7 +192,7 @@ All the codes are available at GitHub (see the last section of tutorial):
     \item Tinker (version 8.8)
     \item cp2k (version 6.1)
 \end{itemize}
-%
+
 \subsection{Dependencies}
 \begin{itemize}
     \item python (version 2.7 and 3.6)
@@ -204,7 +200,7 @@ All the codes are available at GitHub (see the last section of tutorial):
 \end{itemize}
 
 \newpage
-%
+
 \fancyhead[L]{4. Building NNPs}
 \section{Part 1: How to generate neural network potentials}
 \subsection*{Instructions}
@@ -304,7 +300,7 @@ This command means that the simulation will run using the \textit{dynamic} modul
     \item system.dyn
 \end{itemize}
 \end{mybox3}
-%
+
 \subsection{Step 2: Descriptor selection}
 To assign the structures with a suitable set of descriptors, we generate a large pool of the ACSFs and select a small representative set using, for example, CUR decomposition.
 
@@ -388,35 +384,14 @@ The last part defines the symmetry functions sets used in training. While the pa
 
 The n2p2 currently supports Behler-Parrinello types of symmetry functions (radial, angular, wide angular, for definition see Ref. \citenum{behl11jcp}), their weighted variants (Ref. \citenum{Gastegger2018}) and polynomial symmetry functions (Ref. \citenum{Bircher2021}). In this tutorial, we use standard Behler-Parrinello functions.
 
-The initial set of the symmetry function can be generated, for example, by a \textit{symfunc\_paramgen.py} code by Florian Buchner available at \url{https://github.com/flobuch/n2p2/tree/symfunc_paramgen}. Jupyter notebook with an example of the use of a the code is provided at \url{https://github.com/flobuch/n2p2/blob/symfunc_paramgen/tools/python/symfunc_paramgen/examples/example.ipynb}.
+The initial set of the symmetry function can be generated, for example, by a \textit{symfunc\_paramgen.py} code by Florian Buchner available at \url{https://github.com/flobuch/n2p2/tree/symfunc_paramgen}. Jupyter notebook with an example of the use of the code is provided at \url{https://github.com/flobuch/n2p2/blob/symfunc_paramgen/tools/python/symfunc_paramgen/examples/example.ipynb}.
 
-For the NNP of water box, we generate set of radial symmetry functions with cutoff $r_c = 4, 8, 12$ Bohr and $N = 8$ and two sets of angular symmetry functions following the protocol describe in Ref. \citenum{Imbalzano2018}.  Store the symmetry functions in one file \textit{e.g.},  asfs.txt and append it at the end of the input.nn.
+For the NNP of the water box, we generate a set of radial symmetry functions with cutoff $r_c = 4, 8, 12$ Bohr and $N = 8$ and two sets of angular symmetry functions following the protocol described in Ref. \citenum{Imbalzano2018}.  Store the symmetry functions in one file \textit{e.g.},  asfs.txt and append it at the end of the input.nn.
 
 \begin{center}
 \mybox{\textit{cat asfs.txt $>>$ input.nn}}
 \end{center}
 
-%Initial set of the symmetry function can be generate by symmetry\_functions.py as
-
-%\begin{center}
-%\mybox{\textit{python symmetry\_functions.py $>$ asfs.txt}}
-%\end{center}
-%Without any arguments, \textcolor{red}{symfun\_gen.py} generates the data by default: ASFs for only H atom, with a cutoff of 12.0 Bohr and a delta of 0.05. If you want more (as it surely the case), please add in the sumbission line the following different options:
-%\begin{itemize}
-%    \item -e: the name of elements we want the symmetry functions (default: H) (example in this case: -e H O)
-%    \item -c: the cutoff for the symmetry functions (default: 12.0) (example in this case: -c 14.0)
-%    \item -d: the ratio between the minimum sigma of the gaussian and the cutoff. It determines the accuracy with which you sample the space. (default: 0.05) (example in this case: -d 0.2)
-%\end{itemize}
-
-%According to these parameters and the system we want to use, the submission line for \textcolor{red}{symfun\_gen.py} becomes:
-%\begin{center}
-%overleaf color boxex grey \mybox{\textit{python symfun\_gen.py -e H O -c 14.0 -d 0.2 $>$ asfs.txt}}
-%\end{center}
-
-%ASFs are thus generated and stored in the asfs.txt file, which is then appended to the input.nn as
-%\begin{center}
-%\mybox{\textit{cat asfs.txt $>>$ input.nn}}
-%\end{center}
 
 The initial input files needed for the training are therefore:
 \begin{itemize}
@@ -430,7 +405,7 @@ The initial input files needed for the training are therefore:
     \item \textbf{input.nn} 
 \end{itemize}
 \end{mybox3}
-%
+
 \subsubsection{Selection of a subset of descriptors}
 \begin{mybox2}{{Input Files, Executables and Scripts}}
 \begin{minipage}[c]{0.5\linewidth}
@@ -441,22 +416,18 @@ The initial input files needed for the training are therefore:
     \item input.data
     \item input.nn
     \item \textcolor{green}{nnp--scaling}
-%    \item \textcolor{red}{CurSel-integral.py}
-%    \item \textcolor{red}{curlib.py} / \textcolor{red}{iolib.py} / %\textcolor{red}{sflib.py}
 \end{itemize}
 \end{minipage}
 \end{mybox2}
-%The first step, once initial files .data and .nn are ready, is to launch the scaling of our neural network. To perform this task you could place in the same directory the .data and .nn files and type in your terminal:
+Using the symfunc\_paramgen tool, we generated 192 radial and 768 angular symmetry functions, \textit{i.e.}, 480 SF per element. The goal of this section is to select a small subset of the SF that will be used for the training of the NNPs. Following the benchmark and recommendations discussed in Ref. \citenum{Imbalzano2018}, we use the CUR decomposition scheme to select 64 unique symmetry functions per element. The details of CUR and more advanced CovCUR techniques can be found in Ref. \citenum{maho-drin09pnas,Imbalzano2018,Cersonsky2021}. 
 
-Using the symfunc\_paramgen tool, we generated 192 radial and 768 angular symmetry functions, \textit{i.e.}, 480 SF per element. The goal of this section is to selected small subset of the SF which will be used for the training of the NNPs. Following the benchmark and recommendations discussed in Ref. \citenum{Imbalzano2018}, we use CUR decomposition scheme to select 64 unique symmetry functions per element. The details of CUR and more advanced CovCUR techniques can be found in Ref. \citenum{maho-drin09pnas,Imbalzano2018,Cersonsky2021}. 
-
-To evaluate the symmetry functions over the geometries, we use \textit{nnp-scaling} tool in n2p2. However, the number of the symmetry function is huge and the storage of the values over the whole set of structures would be memory demanding. We therefore randomly select subset of structures from the original input.data file using \textit{nnp-select} tool.
+To evaluate the symmetry functions over the geometries, we use \textit{nnp-scaling} tool in n2p2. However, the number of the symmetry function is huge and the storage of the values over the whole set of structures would be memory demanding. We therefore randomly select a subset of structures from the original input.data file using \textit{nnp-select} tool.
 
 \begin{center}
 \mybox{\textit{nnp-select random 0.05 123}}
 \end{center}
 
-Keyword \textit{random} indicates the random selection of the structures, 0.05 corresponds to the percentage of selection and 123 is the seed for random generator. Modify the percentage so it corresponds to roughly 1000 structures.
+Keyword \textit{random} indicates the random selection of the structures, 0.05 corresponds to the percentage of selection, and 123 is the seed for the random generator. Modify the percentage so it corresponds to roughly 1000 structures.
 
 Finally, evaluate the symmetry functions by \textit{nnp-scaling}. Regarding the computational cost, it is advisable to submit the scaling on cluster in parallel, for example:
 
@@ -467,44 +438,12 @@ Finally, evaluate the symmetry functions by \textit{nnp-scaling}. Regarding the 
 
 \textit{nnp-scaling} generates three output files:
 \begin{enumerate}
-    \item \textbf{logfile}: contains list of the symmetry functions and their parameters. \textbf{Needed for the CUR selection.}
-    \item \textbf{function.data}: the evaluation of all the symmetry functions over tha data in \textit{input.data}. \textbf{Needed for CUR selection.}
+    \item \textbf{logfile}: contains a list of the symmetry functions and their parameters. \textbf{Needed for the CUR selection.}
+    \item \textbf{function.data}: the evaluation of all the symmetry functions over the data in \textit{input.data}. \textbf{Needed for CUR selection.}
     \item \textbf{scaling.data}: statistic of the symmetry functions, \textit{i.e.}, the minimum and maximum values, mean and sigma.
 \end{enumerate}
 
 TO BY ADDED!!
-%Among all the ASFs generated, it is now essential to choose a reasonably as well as nonredundant set of ASFs which describe as accurately as possible our system. This task is often the most delicate and time--consuming aspects in the construction of a Behler--Parinnello style MLP. We thus decided to automatize this selection using CUR description and implemented in a home script named \textcolor{red}{CurSel-integral.py}. You could just place this script in the same direction as function.data and launch it as:
-%\begin{center}
-%\mybox{\textit{python CurSel-integral.py function.data logfile -n 64 --landmarks 1000 --prefix cursel $>$ out}}
-%\end{center}
-%As before, 3 output files are generated:
-%\begin{enumerate}
-%    \item \textbf{out}: the output file of the procedure.
-%    \item \textbf{cursel.def}: the chosen symmetry functions.
-%    \item \textbf{cursel.landmarks}: the frame's number selected.
-%\end{enumerate}
-
-%The \textbf{cursel.def} will be useful in the STEP 4 and \textbf{cursel.landmarks} in STEP 3. \\
-%\begin{mybox1}{Checking of the ASFs !}
-%\Warning Generated ASFs  should be checked by plotting them in an external software (gnuplot) in order to check if they well cover the space or not. A good balance between G2 and G3 has also to be respected !
-%\end{mybox1}
-
-%\begin{mybox1}{Stability of NNP !}
-%\Warning Although a good balance between G2 and G3 is needed, some other parameters are important to consider. One of them is the number of structures within the dataset. In our case, with only 1000 structures we can not wait for a stable NNP as the number of structures should not be sufficient enough. However, we kept this number to ensure a good ratio between understanding and short computational time for methodological understanding within this tutorial. However, this setup should not be used for production. If the user is then, after this tutorial, interested to use it for production, a setup used recently for production is provided at the end of this tutorial ! 
-%\end{mybox1}
-
-
-%\begin{mybox3}{Output Files}
-%\begin{itemize}
-%    \item logfile
-%    \item function.data
-%    \item scaling.data
-%    \item out
-%    \item \textbf{cursel.def}
-%    \item \textbf{cursel.landmarks}
-%\end{itemize}
-%\end{mybox3}
-%
 
 \subsection{Step 3: Hybrid DFT force--energy computations}
 \begin{mybox2}{{Input Files, Executables and Scripts}}
@@ -539,7 +478,7 @@ It will generate a new file \textbf{new--input.data} containing the 1000 structu
     \item \textbf{\$i-cp2k.xyz}
 \end{itemize}
 \end{mybox3}
-%
+
 \subsubsection{CP2K computations}
 \begin{mybox2}{{Input Files, Executables and Scripts}}
 \begin{minipage}[c]{0.5\linewidth}
@@ -580,7 +519,7 @@ The output of the computation including energy and forces is in the output.cp2k 
 \end{itemize}
 \end{minipage}
 \end{mybox2}
-The database of the energy and forces can be created using the process.sh scrip. The resulting information is saved in database\_forces-pbe0.xyz file.
+The database of the energy and forces can be created using the process.sh scrip. The resulting information is saved in the database\_forces-pbe0.xyz file.
 \\
 \begin{mybox3}{Output Files}
 \begin{itemize}
@@ -601,7 +540,7 @@ The database of the energy and forces can be created using the process.sh scrip.
 \end{itemize}
 \end{minipage}
 \end{mybox2}
-Finally, with the database of energies and forces for the training structures, we create the final input.data file which is used for  the training. This can be done, for instance, by the XXX code.
+Finally, with the database of energies and forces for the training structures, we create the final input.data file which is used for the training. This can be done, for instance, by the XXX code.
 \begin{center}
 \mybox{\textit{gfortran update.f90 ; ./a.out}}
 \end{center}
@@ -644,7 +583,7 @@ The neural network potentials are trained to achieve as low RMSE on the test set
     \item Column 5: RMSE of test forces (physical units)
 \end{enumerate}
 
- The physical units correspond to the units used in the training data. In our case, energy is specified in Hartree (a.u.) and forces in Hartree per Bohr. The training errors discussed in the literature are commonly specified in the meV and meV/$\AA$ or in kcal/mol and kcal/mol/$\AA$. The conversion factors are: 1 a.u = 627.5 kcal/mol = 27.211 eV, 1 Bohr = 0.529177 $\AA$. The learning curves can be plotted in Gnuplot to visualize the training progress. For example, the plotting of the RMSE in error in energy for the training set and test set:
+ The physical units correspond to the units used in the training data. In our case, energy is specified in Hartree (a.u.) and forces in Hartree per Bohr. The training errors discussed in the literature are commonly specified in the meV and meV/$\AA$ or kcal/mol and kcal/mol/$\AA$. The conversion factors are: 1 a.u = 627.5 kcal/mol = 27.211 eV, 1 Bohr = 0.529177 $\AA$. The learning curves can be plotted in Gnuplot to visualize the training progress. For example, the plotting of the RMSE in error in energy for the training set and test set:
 
 \begin{center}
 \mybox{\textit{p 'learning-curve.out' u 1:(\$2*1000*27.11) w l, 'learning-curve.out' u 1:(\$3*1000*27.11) w l }}
@@ -658,14 +597,14 @@ The neural network potentials are trained to achieve as low RMSE on the test set
     \label{fig:my_label}
 \end{figure}
 
-The Behler-Parrinello NNP can often achieve RMSE around 1 meV/atom in energy and  less than 100 meV/$\AA$ in forces. The RMSE obtained for the water box show similar trend and can be tested in molecular dynamics.
+The Behler-Parrinello NNP can often achieve RMSE around 1 meV/atom in energy and less than 100 meV/$\AA$ in forces. The RMSE obtained for the water box show a similar trend and can be tested in molecular dynamics.
 
 \newpage
 \fancyhead[L]{5. NNP--MD}
 \section{Part 2: Application of NNP in Molecular Dynamics}
 The stability of the NNP trained in the previous section should be verified in the molecular dynamics. To achieve this, we use a simulation workflow depicted in Fig. \ref{fig:workflow}. 
 
-The workflow combines several existing approaches and codes representing a state-of-the-art methods in molecular dynamics. The central part is the i-PI molecular dynamics driver, which propagates the nuclei using external potentials and guides the communication between all codes. 
+The workflow combines several existing approaches and codes representing a state-of-the-art method in molecular dynamics. The central part is the i-PI molecular dynamics driver, which propagates the nuclei using external potentials and guides the communication between all codes. 
 
 The evaluation of the energy and forces for a given geometry is performed by the n2p2 library implemented in LAMMPS using the NNP we trained in the previous sections. The workflow allows to run MD with two types of NNPs: (i) direct NNPs (DNNP) reproducing the DFT data, and (ii) baselined NNPs (BNNP) (\textit{vide infra}) which serve as a correction applied on the top of a cheaper potential (\textit{e.g.}, a semiempirical method). 
 
@@ -676,79 +615,6 @@ The evaluation of the energy and forces for a given geometry is performed by the
     \label{fig:workflow}
 \end{figure}
 
-%\subsection{Launching the i--PI interface}
-%\begin{mybox2}{{Input Files, Executables and Scripts}}
-%\begin{minipage}[c]{0.5\linewidth}
-%\includegraphics[scale=0.35]{ipi-logo-alpha.png}
-%\end{minipage}
-%\begin{minipage}[c]{0.5\linewidth}
-%\begin{itemize}
-%    \item input.xml
-%    \item system.xyz
-%\end{itemize}
-%\end{minipage}
-%\end{mybox2}
-
-%\begin{center}
-%\mybox{\textit{python i-pi input.xml $>>$ ipi.out \&}}
-%\end{center}
-%It will create an output file named ipi.out, and the i--PI interface will be waiting for any actions you will submit. This will be described in the next subsection. \\
-%Just a point on the input.xml file. It corresponds to the input file of i--PI and contain all the main informations of the MD, such as temperature, timestep, periodicity, units, thermodynamic ensemble, ...). You could feel free to change it if the conditions are not the same for another system of interest. The most critical block in this file is localized in the \textbf{prng} block with:
-%\begin{itemize}
-%    \item \textbf{socket}: keep driver--lammps1 if LAMMPS will be coupled to i--PI.
-%    \item \textbf{address}: it corresponds to the adress of the node where i--PI will be launched.
-%    \item \textbf{port}: the port of the node.
-%    \item \textbf{slots}: do not touch it.
-%    \item \textbf{timeout}: time for killing calculation without having any communications.
-%\end{itemize}
-
-%\begin{mybox3}{Output Files}
-%\begin{itemize}
-%    \item \textbf{ipi.out}
-%\end{itemize}
-%\end{mybox3}
-%
-%\subsection{Linking n2p2 with LAMMPS}
-%\begin{mybox2}{{Input Files, Executables and Scripts}}
-%\begin{minipage}[c]{0.5\linewidth}
-%\includegraphics[scale=0.35]{LAMMPS.png}
-%\end{minipage}
-%\begin{minipage}[c]{0.5\linewidth}
-%\begin{itemize}
-%    \item lmp1.in
-%    \item system.xyz
-%    \item \textcolor{red}{get\_lammps.sh}
-%\end{itemize}
-%\end{minipage}
-%\end{mybox2}
-%Once i--PI is running and is waiting for communication with another software(s), we can initialize LAMMPS computation which will serve as an intermediate with n2p2 to compute energy and forces at every timestep of the dynamics and communicate them to i--PI for forces integration. We thus start with classical LAMMPS files, which have to be:
-%\begin{itemize}
-%    \item An input file (.in) where keyword for MD is specified,
-%    \item A coordinate file (.data), which is specific for LAMMPS.
-%\end{itemize}
-%Starting from a classical xyz structure, we could translate it in .data file by applying the \textcolor{red}{get\_lammps.sh} script as:
-%\begin{center}
-%\mybox{\textit{sh get\_lammps.sh system.xyz}}
-%\end{center}
-%Just adapt (if necessary) the script file in function of your system ! In our case, it is designed for our periodic box of water molecules, and an output file named \textbf{initial.data} is generated and correspond to the initial set of coordinates for the LAMMPS calculation. This file is called in lmp1.in as \textit{read\_data ./initial.data}, and mass objects are ordered in function of the initial.data file. For the other lines, a classical example is provided in the lmp1.in and is close to every input file for MD (AMBER, NAMD, Tinker, ...). For more details, a tutorial of LAMMPS will be specified at the end of the tutorial. \\
-%While i--PI is running and the initial.data and lmp1.in are ready for a LAMMPS calculation, additional keywords have to be added in the lmp1.in to specify the connection between LAMMPS and n2p2:
-%\begin{itemize}
-%    \item variable runnerCutoff    equal  7.0000
-%    \item variable runnerDir       string "/path/to/nnp-data"
-%    \item pair\_style nnp dir \$\{runnerDir\} showew no showewsum 1 resetew yes maxew 200000 cflength 1.889726 cfenergy 0.036749
-%    \item pair\_coeff * * \$\{runnerCutoff\}
-%    \item fix 1 all ipi 192.168.100.1 8766
-%\end{itemize}
-%The two first lines are variable declarations. \$\{runnerDir\} is the directory of the nnp data and \$\{runnerCutoff\} is maximum cutoff radius of all symmetry functions. \textbf{The cutoff must be given in LAMMPS length units, even if the neural network potential has been trained using a different unit system}. \\
-%The pair\_style adds an interaction based on the high-dimensional neural network potential method. It uses an interface to the NNP library, which has to be declared before launching the calculation (see next subsection). \\
-%Finally, the fix line called the adress and the port where i--PI is running.
-%\\
-%\begin{mybox3}{Output Files}
-%\begin{itemize}
-%    \item \textbf{initial.data}
-%\end{itemize}
-%\end{mybox3}
-%
 \subsection{Launching LAMMPS with the i--PI interface}
 \begin{mybox2}{{Input Files, Executables and Scripts}}
 \begin{minipage}[c]{0.5\linewidth}
@@ -766,22 +632,22 @@ The evaluation of the energy and forces for a given geometry is performed by the
 \end{minipage}
 \end{mybox2}
 
-The detailed documentations and tutorials for the codes used here are listed in section \ref{sec:tutorials}. We recommend users to get familiar with the inputs and submission commands. Here, we provide guidance to the setting relevant to the application of NNPs. 
+The detailed documentation and tutorials for the codes used here are listed in section \ref{sec:tutorials}. We recommend users get familiar with the inputs and submission commands. Here, we guide to the setting relevant to the application of NNPs. 
 
-In this section, we use i-PI driver in combination with n2p2 library, which is part of the LAMMPS code. 
+In this section, we use the i-PI driver in combination with the n2p2 library, which is part of the LAMMPS code. 
 
-To run MD with the NNP, create a new directory. Tu execute the MD, several files are needed, namely:
+To run MD with the NNP, create a new directory and copy them the following files:
 \begin{itemize}
 \item input.xml - the input file for i\_PI
 \item system.xyz - the xyz coordinates of the initial structure for MD
 \item lmp1.in - the input file for LAMMPS
-\item initial.data - the same structure as in system.xyz, but in the LAMMPS format 
-\item NNP paremeters
+\item initial.data - the same structure as in the system.xyz, but in the LAMMPS format 
+\item NNP parameters
 \end{itemize}
 
-To extract the parameters of the NNP, create the nnp\_parameters directory and place in the files obtained during the training, namely: input.data, input.nn, scaling.data and weights.XXX.001000.out. The name of the weight files needs to be changed to format weights.XXX.data. 
+To extract the parameters of the NNP, create the nnp\_parameters directory and place it in the files obtained during the training, namely: input.data, input.nn, scaling.data and weights.XXX.001000.out. The name of the weight files needs to be changed to format weights.XXX.data. 
 
-Now, let's have look on the content of the different input files. The system.xyz is the starting frame of the MD simulation, which is read by i-PI. The same structure needs to be provided also for the LAMMPS and can be found in the initial.data. The initial data file can be generated by the script get\_lammps.sh.
+Now, let's have look at the content of the different input files. The system.xyz is the starting frame of the MD simulation, which is read by i-PI. The same structure needs to be provided also for the LAMMPS and can be found in the initial.data. The initial data file can be generated by the script get\_lammps.sh.
 
 The input.xml contains the parameters of the molecular dynamics, for example, simulation ensemble, thermostat, temperature, and time step. The energy and forces are computed by an external code, in our case LAMMPS. The connection between the i-PI and LAMMPS is provide via socket interface, specified in the part \textbf{ffsocket}:
 
@@ -794,40 +660,54 @@ The input.xml contains the parameters of the molecular dynamics, for example, si
     </ffsocket>
 \end{verbatim}
 
-In this case, the i-PI and LAMMPs communicate via inet interface, which is defined by unique combination of IP address and port. Details of the setting can be find in the i-PI documentations. In general, the i-PI with establish the communication channel using the given address. The external code then connects to this channel. 
+In this case, the i-PI and LAMMPs communicate via an inet interface, which is defined by a unique combination of IP address and port. Details of the setting can be found in the i-PI documentation. In general, the i-PI establishes the communication channel using the given address. The external code then connects to this channel to receive and send information. The socket interface prevets the initialization of the external code in every step, which significantly saves computational time. 
 
-The input parameters for the LAMMPS are placed in the lmp1.in file. The NNP specification is in:
+The input parameters for the LAMMPS are placed in the lmp1.in file. The NNP specification is described in the pair\_style:
 
 \begin{verbatim}
-    
+pair_style nnp dir ${runnerDir} showew no showewsum 1 resetew yes maxew 200000
+cflength 1.889726 cfenergy 0.036749
+
+pair_coeff * * ${runnerCutoff}
 \end{verbatim}
+
+The pair style informs LAMMPS to use the interaction computed by nnp potentials trained with n2p2. \${runnerDir} variable contains the path to the NNP parameters. The additional parameters control the printing of the extrapolation warning by n2p2. Detailed explanation of possible option is given in the n2p1 tutorial (see section \ref{sec:tutorials}).
+
+The pair\_coeff command contains information on the runner\_cutoff, which is the larger cutoff of the symmetry functions used in the NNP training. It needs to be specified in the LAMMPS units, \textit{i.e.} in Angstrom. 
+
+The last part of the input then specifies the connection to i-PI and the number of steps.
+
+\begin{verbatim}
+    fix 1 all ipi 192.168.100.1 8762
+\end{verbatim}
+
+To launch the molecular dynamics, initiat the the i-PI by:
+
+\begin{center}
+\mybox{\textit{python i-pi input.xml $>>$ ipi.out \&}}
+\end{center}
+
+and then launch LAMMPS:
 
 \begin{enumerate}
     \item export LD\_LIBRARY\_PATH=/path/to/n2p2/lib:\$\{LD\_LIBRARY\_PATH\}
     \item lmp -i lmp1.in $>>$ log1.lammps \&
 \end{enumerate}
-Files \textbf{simulation.force\_0.xyz} and \textbf{simulation.pos\_0.xyz} will be filled, according to the printing frequency we specified in the lmp1.in (here 1 at the "fix" line).
-\\
-\begin{mybox1}{Interpretation tool !}
-\begin{itemize}
-    \item Simulation could be observed using either vmd or molden softwares. It is the first step to do in order to observe if the simulation is stable or not.
-    \item From this simulation, new structures could then be extracted to improve the quality of the NNP, and training as well as simulations are then performed in a SCF procedure until no new structures are observed.
-\end{itemize}
-\end{mybox1}
-%
+
+The simulation trajectory will be printed in the simulation.pos\_0.xyz and can be visualized for example by vmd (\url{https://www.ks.uiuc.edu/Research/vmd/}). 
+
+While the NNPs have sufficiently small training errors, the MD will be stable for only a few steps. After that, it will start to produce unphysical geometries and eventually explode. \textbf{The monitoring RMSE itself is therefore not sufficient to estimate the quality of the resulting potentials!} 
+
+To obtain stable and reliable molecular dynamics, the NNP quality needs to be improved significantly. One of the possibilities is to identify the problematic geometries from the molecular dynamics, compute the reference energy and forces and retrain the NNP with the new set of structures. This needs to be often repeated several times until the NNP provides stable and reliable results. The number of needed structures may, however, often reach more than a dozen thousand. Another strategy is to start with the structures generated by a sufficiently good level of theory, for example, the semiempirical method or DFT (\textit{e.g.}, PBE). 
+
 \fancyhead[L]{6. Baselined NNP--MD}
 \section{Part 3: From direct to baselined NNP}
 %
 \subsection{What is baselined NNP?}
-In the previous sections (parts 1 and 2) we learnt how to generate a NNP and how to use it within the i--PI interface. While the NNP trained directly on DFT data provide predictions at impressive speed, the stability and accuracy of these NNPs is often difficult to achieve. The problems with stability are probably the simplest ones to detect. The system simulated with non-stable NNPs has tendency to explode within the first picosecond of the simulation. The reasons might be:
-\begin{enumerate}
-    \item \textbf{The quality of the generated data}: instead of generating initial structures with the Tinker MD software, we could use semi--empirical methods to generate structures more closely to \textit{ab initio} dynamics. 
-    \item \textbf{The choice of symmetry functions}: the number as well as the spacing chosen to generate the symmetry functions play a crucial role in the stability of the NNP. 
-    \item \textbf{Number of data points}: Direct NNP require relatively large number of structures to provide stable dynamics. Low nuber of the structures can be reason for instabilities in sparsely represented regions of PES.
-\end{enumerate}
-As demonstarted by the examples, stabilization of direct NNPs is not an easy task, even for a small water box. A suitable alternative is to train so called baselined NNP. Instead of reproducing directly the DFT forces and energy, the NNPs are trained to correct the forces and energy computed at a lower level of theory, for example semiempirical method. The baselined NNPs require lower number of structures and descriptors and more robust compared to the direct NNP. In the following part, we show how to adapt our NNP training protocol in order to use it as a "Baselined NNP". 
+In the previous sections, we learned how to generate the NNPs and use them with the i-PI interface. While the NNP trained directly on DFT data provide predictions at impressive speed, they are often difficult to stabilize, especially for complex systems using more than three elements. As demonstrated by the example, stabilization of direct NNPs is not an easy task, even for a small water box. 
+A suitable alternative when dealing with large and complex systems is to use so-called baselined NNP.\cite{ramakrishnan2015big} Instead of reproducing directly the DFT data, the baselined NNPs are trained to correct the forces and energy computed at a lower level of theory. The baselined NNPs thus require a lower number of structures and descriptors and are more robust compared to the direct NNP. In the following part, we demonstrate how to train the baselined NNPs adn apply them in the MD.
 %
-\subsection{Baselined forces and energy}
+\subsection{Baselined energy and forces}
 \begin{mybox2}{{Input Files, Executables and Scripts}}
 \begin{minipage}[c]{0.5\linewidth}
 \includegraphics[scale=0.15]{latex_files/xtb.png}
@@ -835,26 +715,27 @@ As demonstarted by the examples, stabilization of direct NNPs is not an easy tas
 \begin{minipage}[c]{0.5\linewidth}
 \begin{itemize}
     \item input.data
+    \item \textcolor{green}{xtb\_ase.py xtb\_io.py}
+     
     \item \textcolor{green}{xtb}
 \end{itemize}
 \end{minipage}
 \end{mybox2}
-While we already have the accurate reference energies and forces coming from the cp2k computations, we need to choose suitable baseline method. In this tutorial, we use semiempirical GFN0-xTB method. Therefore, energy and forces of the training structures need to be recomputed at this level. \\
-To proceed to the computations, please follow these steps:
-\begin{enumerate}
-    \item Create one folder per structure and extract the corresponded structure from the input.data file and place it in the corresponded folder (\textit{prep.sh})
-    \item Convert each frame (n2p2 format) in xyz format (\textit{prep2.sh} linked with \textit{from\_data\_to\_xtb.f90})
-    \item Submit interactively all the computations at the GFN0-xTB level of theory (\textit{sub.sh})
-    \item Once all the computations are ended, compute the differences between DFT and GFN0-xTB energies and forces for each frame and add the results in a new file called new--input.data (\textit{calc--diff.sh}).
-\end{enumerate}
+At the beginning, we need to choose a suitable baseline method for the NNP. The baseline can be any computational method which provides reasonable results at computational cost significantly lower the reference. In this tutorial, we use the GFN0-xTB Hamiltonian from the family of xTB methods.\cite{https://doi.org/10.1002/wcms.1493} 
+
+The construction of the baselined NNPs is practically identical to the direct NNP. However, the target properties are not the DFT data but the difference between the DFT and GFN0-xTB results. As a first step, we therefore need to compute the energy and forces for the existing set of structures. For this, we use the xTB v6.2. To automatize the computation, we use ase calculator to prepare the structures and submit the computations. The calculator is available at xtb\_io.py. 
+
+At the beginning, copy the xyz structures used for PBE computations into new folder. Then, use script prepare\_xtb.sh to move every structure to separated dictionary and submit the computations. The example of the submission script is at submit.sh. You will need to modify the path to the xtb and cluster specific settings.
+
+Once the computations are finished, use process\_xtb\_forces.sh to create the forces database and translate\_xtb.f90 to generate new input.data file.
 
 \begin{mybox3}{Output Files}
 \begin{itemize}
-    \item \textbf{new--input.data}
+    \item \textbf{input.data}
 \end{itemize}
 \end{mybox3}
 %
-\subsection{New training}
+\subsection{The training}
 \begin{mybox2}{{Input Files, Executables and Scripts}}
 \begin{minipage}[c]{0.5\linewidth}
 \includegraphics[scale=0.1]{latex_files/n2p2.png}
@@ -868,12 +749,10 @@ To proceed to the computations, please follow these steps:
 \end{itemize}
 \end{minipage}
 \end{mybox2}
-First, rename the new--input.data to input.data and place it in a new folder with the input.nn file. The procedure to train a Baselined--NNP is analogous to direct NNP:
-\begin{enumerate}
-    \item Use the \textcolor{green}{nnp--scaling} executable (see Step 4) to generate the corresponding scaling.data
-    \item Use the \textcolor{green}{nnp--train} executable (see Step 4 again) to train Baselined--NNP. 
-\end{enumerate}
 
+In the next step, create new folder for the training of the NNP, move there input.data and input.nn files and generate the scaling.data file for the new database. Here, we use the same input.nn file as for the direct NNP. However, the best parameters for the baselined NNP might be different. Feel free to experiment with the number of the epoch, size of the training set and test set, ratio of the forces etc.  
+
+In general, the RMSE errors in the training of the baselined NNP will be lower than in the direct case. For the comparison of the baselined and direct NNP, see for example Ref. \citenum{Rossi2020,Juraskova2021}.
 \begin{mybox3}{Output Files}
 \begin{itemize}
     \item \textbf{learning-curve.out}
@@ -894,85 +773,49 @@ First, rename the new--input.data to input.data and place it in a new folder wit
     \item input.xml
     \item initial.data system.xyz
     \item lmp1.in
-    \item \textcolor{green}{xtb\_ase.py} xtb\_io.py
+    \item \textcolor{green}{xtb\_ase.py xtb\_io.py}
 \end{itemize}
 \end{minipage}
 \end{mybox2}
 
-Once the training is finished, you can launch your Baselined--NN MD similarly to direct NNP. The main difference is that apart from the NNP itself, you also need to perform computation of the baseline at every step. The submission is  be done as follows: 
-\begin{enumerate}
-    \item Create a new directory labeled nnp--data and place there the input.data, input.nn, scaling.data and weightsXXX.data files from the last epoch
-    \item Change the name of the weightsXXX.data files in respectively weights.001.data (H) and weights.008.data (O).
-    \item Adapt the path of the nnp--data folder in the lmp1.in file
-    \item Also adapt the sockets in the respectively files:
-    \begin{itemize}
-        \item input.xml
-        \item lmp1.in
-        \item xtb\_ase.py
-        \item sub.run
-    \end{itemize}
-    \item Launch the simulation with the sub.sh script file !
-\end{enumerate}
+Once the training is finished, you can launch the baselined--NNP MD. The main difference concerning the direct DFT is that apart from the NNP itself, you also need to compute the baseline energy and forces at every step. The input.xml for the i-PI therefore includes computations of forces using additional code, in our case xtb via xtb-ASE calculator. The new lines in the input.xml include two communication channels:
 
-\begin{mybox1}{New xtb--ase python interface}
-\begin{itemize}
-    \item The both files \textcolor{green}{xtb\_ase.py} and xtb\_io.py provide a new python interface between ase and xtb as the interface for xtb 6.3.3 encounters some issues ...
-    \item This interface is a little bit primitive, so be careful about error messages ...
-\end{itemize}
-\end{mybox1}
+\begin{verbatim}
+   <ffsocket mode="inet" name="driver-lammps1">
+      <address>192.168.100.117</address>
+      <port>8762</port>
+      <slots>1</slots>
+      <timeout>600</timeout>
+    </ffsocket>
+    <ffsocket mode='inet' name='driver-xtb'>
+     <address>192.168.100.117</address>
+     <port>8763</port>
+     <slots>1</slots>
+     <timeout>600</timeout>
+     </ffsocket>
 
-\begin{mybox1}{Interpretation tools}
-\begin{itemize}
-    \item This time, the simulation does not crash as it was the case for the direct NNP. It finally means that direct NNP is definitevely more sensitive to the choice of symmetry functions as well as initial structures encompassing the dataset. 
-    \item However, the EW messages present in the log.lammps are too high ... (around 50 EW per step in our cas). \textbf{A rule of thumb is to consider that a structure depicted more than 10/20 EW is badly described by the NNP}. It means that even if the simulation does not crash, the NNP is not optimal and should be optimized following the self consistent procedure described in section 2 of this tutorial.
-\end{itemize}
-\end{mybox1}
-%
-\subsection{Fast and accurate: Multiple-time-step approach}
-\begin{mybox2}{{Input Files, Executables and Scripts}}
-\begin{minipage}[c]{0.5\linewidth}
-\includegraphics[scale=0.35]{latex_files/ipi-logo-alpha.png} \\
-\end{minipage}
-\begin{minipage}[c]{0.5\linewidth}
-\begin{itemize}
-    \item input.data input.nn scaling.data from baselined
-    \item input.data input.nn scaling.data from direct
-    \item weights.001.001000.out weights.008.001000.out from baselined
-    \item weights.001.001000.out weights.008.001000.out from direct
-    \item input.xml
-    \item initial.data system.xyz
-    \item lmp1.in
-    \item \textcolor{green}{xtb\_ase.py} xtb\_io.py
-\end{itemize}
-\end{minipage}
-\end{mybox2}
-When direct NNP is not stable to fully run itself but not so bad in single point accuracy, it could be coupled to the baselined NNP to form what we call a mulit--time--step approach. In this approach, forces and energy are computed x times using the direct NNP and then one time with the baselined NNP. It helps to avoid some crashing from the direct NNP and improves the speed of the simulation because the baselined is not computed at every step. Using the i--PI software, we will see how such a coupling is possible. 
+\end{verbatim}
 
+and two force computations:
 
-To run i--PI within such a mode (i.e multi--time--step), please follow the following instructions:
-\begin{enumerate}
-    \item Create a folder and place the submission file, system.xyz and input.xml files
-    \item In this folder, create two new directories labeled nnp-data-direct and nnp-data-baselined and place in each respective folder the corresponding input.data, input.nn, scaling.data and the weights.XXX.data files
-    \item Place the lmp1.in in both the directories and adapt the respective path of the corresponding folder in each lmp1.in
-    \item Do not forget to place xtb\_ase.py and xtb\_io.py in the baselined directory
-    \item Adapt the sockets in input.xml and lmp1.in for the direct NNP
-    \item Adapt the sockets in input.xml, lmp1.in and xtb\_ase.py for the baselined NNP
-    \item Launch the simulation with the sub.sh script file !
-\end{enumerate}
-In our case, we launched a multi--time--step simulation with an inner timestep of 0.5 fs where forces and energy are computed with the direct NNP and an outer timestep of 3 fs where forces and energy are computed using the xTB baseline and corrected with the baselined NNP. All the relative keywords are mentioned within the input.xml and the structure of the file does not differ from the previous ones met during the tutorial.
-\begin{mybox1}{Interpretation tools}
-\begin{itemize}
-    \item The accuracy of such a dynamic is very sensitive to the energy conservation during the dynamics. Therefore, the choice of 0.5/3 was made in a sens to ensure the conservation of the energy. However on other systems careful attention should be taken on this conservation.
-    \item As mentioned before EW should still be checked but should be now lower compared to the direct NNP simulation. 
-    \item Finally, in order to improve the accuracy from the baselined more than 1 NNP can be considered during the dynamics. Indeed, i--PI enables to take the average made on more than 1 prediction. It has the main advantage to decrease the error made on the NNP prediction but impact the speed of the dynamics as more predictions has to be performed at the same time.
-\end{itemize}
-\end{mybox1}
-%
-%
-%\newpage
-%\fancyhead[L]{7. Conclusions and supplementary tutorials}
-%\section{Conclusions}
-%Thorough this tutorial we described the main idea on how to construct manually an efficient NNP and how to link it to a MD software (LAMMPS %in our case). This procedure is straightforwardly transferable to every chemical systems and hope it will be helpful to include reactivity in conventional Molecular Dynamics.  
+\begin{verbatim}
+    <forces>
+      <force forcefield ="driver-lammps1" weight='-1.000'></force>
+      <force forcefield ="driver-xtb"></force>
+    </forces>
+\end{verbatim}
+
+The weight in the first line depends on the definition of your correction in the input.data. In our case, the baselined NNP reproduce xTB - DFT energy and forces.
+
+While the MD with baselined NNP is more stable than with the direct NNP and does not expolde, it still produces unphysical geometries and has large extrapolation earnings (see log1.lammps). The iterative improvement of the NNP is therefore again needed. However, lower number of stuctures will be needed to improve quality of the NNP than in the direct case.
+
+\subsection{Multiple-time-step approach}
+
+In the previous sections, we introduced direct and baselined NNP. While the water box is relatively simple system, we can already see that baselined NNP are more robust in the simulation and are easier to train. However, their application in the molecular dynamics is significantly more expensive than the direct NNP due to cost of the baseline. This limitations become much stronger for complex systems and systems with large number of atoms. 
+To decrease the computational cost of the baselined NNP while keep its accuracy, we use so called multiple-time-step approach (MTS).\cite{} 
+
+Here, we use an MTS with a 1-6 scheme, where the energy and forces are computed by a direct NNP using an inner time step of 0.5 fs and corrected by GFN0-xtb and baselined NNP every 3 fs. All the relative keywords are mentioned within the input.xml and the structure of the file does not differ from the previous ones met during the tutorial.
+
 %
 \newpage
 \fancyhead[L]{7. Supplementary tutorials}
