@@ -1,5 +1,5 @@
 # MD-NNP-tutorial
-Introductory tutorial explaining how to train and use Behler-Parrinello NNPs
+Introductory tutorial explaining how to train and use Behler-Parrinello NNPs in the context of advanced molecular dynamics of complex solvated systems. The available codes will be gradually uploaded. For the questions regarding tutorial, contact the authors directly. 
 
 ## Requirements
 This tutorial presents a workflow which requires extensive number of different software packages, scripts and libraries.

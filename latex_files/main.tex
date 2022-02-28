@@ -91,31 +91,29 @@
 \renewcommand\footrulewidth{1pt}
 \fancyfoot[C]{\thepage}
 \fancyfoot[R]{\today}
-\section{Introduction}
 \fancyhead[L]{1. Introduction}
-This tutorial aims to guide the building of neural network-based potentials (NNPs) and their application in molecular dynamics (MD). As the \textit{ab initio} MD is too computationally demanding to obtain statistically converged simulations of chemical reactions and processes in large systems, the MD with NNPs benefits from the much lower cost of the simulation while the accuracy of the AIMD is conserved.  
-In this regard, NNPs have been already used in the reactive simulations in the gas phase and aqueous solutions (\textit{e.g.}, in the description of proton transfer and urea hydrolysis). 
+\section{Introduction}
+This tutorial aims to guide the building of neural network-based potentials (NNPs) and their application in molecular dynamics (MD). As the \textit{ab initio} MD is too computationally demanding to obtain statistically converged simulations of chemical reactions and processes in large systems, the MD with NNPs benefits from the much lower cost of the simulation while the accuracy of the AIMD is conserved. 
 
-\textbf{Part 1} of this tutorial is dedicated to the generation of the Behler-Parrinello NNPs, including the preparation of a robust data set, selection of the descriptors, and monitoring of the accuracy of the training. \textbf{Part 2} demonstrates how to use the NNPs using the i-Pi interface to LAMMPS and other codes. \textbf{Part 3} introduces the concept of baselined NNPs and showcases its advantages compared to NNPs trained directly on DFT data. 
+\textbf{Part 1} of this tutorial is dedicated to the generation of the Behler-Parrinello NNPs, including the preparation of a robust data set, selection of the descriptors, and monitoring of the accuracy of the training. \textbf{Part 2} demonstrates how to use the NNPs using the i-PI interface to LAMMPS and other codes. \textbf{Part 3} introduces the concept of baselined NNPs, showcases its advantages compared to NNPs trained directly on DFT data, and provides a manual to multiple-time-step scheme with NNPs. 
+
 \fancyhead[L]{2. Neural Networks-based potentials: Crash course}
-
 \section{Neural Networks-based potentials: Crash course}
-
-\textbf{Neural Networks are statistical models which can reproduce complex non-linear functions using large amounts of the training points.} The availability of so-called \textit{Big data} in a broad range of human activities resulted in the harvesting of neural networks in the development of game-playing models, speech and text recognition software, or analysis of patients' data in modern health care, to name a few. Recently, the power of NN to reproduce highly complex data has been exploited in the development of a new generation of potentials for molecular dynamics. The Neural Network Potentials (NNPs) are trained to mimic the shape of the corresponding potential energy surface using the \textbf{data sets} containing coordinates and corresponding \textit{ab initio} data (i.e., energy and possibly forces). The resulting NNPs are then used to propagate molecular dynamics with the accuracy of the underlying \textit{ab initio} method but with a fraction of its original cost. Many NN architectures to train the NNPs have been proposed during the last years. In this tutorial, we focus on the training of Behler-Parrinello NNPs based on feedforward NN.  
+\textbf{Neural Networks are statistical models which can reproduce complex non-linear functions using large amounts of the training points.} The availability of so-called \textit{Big data} in a broad range of human activities resulted in the harvesting of neural networks in the development of game-playing models, speech and text recognition software, or analysis of patients' data in modern health care, to name a few. Recently, the power of NN to reproduce highly complex data has been exploited in the development of a new generation of potentials for molecular dynamics. The so-called Neural Network-based Potentials (NNPs) are trained to mimic the shape of the corresponding potential energy surface using the \textbf{data sets} containing coordinates and  \textit{ab initio} energy and possibly forces. The resulting NNPs are then used to propagate molecular dynamics with the accuracy of the underlying \textit{ab initio} method but with a fraction of its original cost. Several NN architectures to construct the NNPs have been proposed during the last years. In this tutorial, we focus on Behler-Parrinello NNPs based on feedforward NN.  
 
 \subsection{Feedforward Neural Networks}
 \begin{figure}[!h]
     \centering
-    \includegraphics[scale=0.4]{latex_files/NNP_scheme.jpeg}
+    \includegraphics[scale=1.0]{latex_files/feed_forward_NN.png}
     \caption{Schematic representation of a small feedforward NN. Nodes are interconnected in order to establish a functional relation between a set of coordinates $G$ (input layer) and the potential energy of the structure E (output layer). }
     \label{NNP_scheme}
 \end{figure}
-The example of the feedforward NN is depicted in Fig. \ref{NNP_scheme}. It is made from several nodes organized in interconnected layers. The potential energy \textit{E} corresponds to the node in the \textbf{output layer} and the atomic coordinates of a frame are provided in the \textbf{input layer} as vectors of input coordinates $G=\{G_i\}$. The input and output layers are connected via several so-called \textbf{hidden layers} with no physical meaning. The number of layers and the nodes define the flexibility of the final NN. The example shows the NN with two layers containing five and four nodes, respectively. 
-Each node is connected to the nodes of the next layer with a specific weight \textbf{$a_{ij}^{kl}$}, where $i$ is the index of a node of layer $k$, which is connected to the node with index $j$ of layer $l$. For instance, the $a_{45}^{01}$ connects the nodes $G_4$ ($k = 0$, $i=4$) and $y_5^1$ ($l=1$,  $j=5$). Nodes in hidden and output layers are connected to a so-called bias node, which scales their values by a bias weight b$_i^j$, where $j$ is the layer of the target node and $i$ is the node index. In our scheme, the bias node is omitted for simplicity.
+The example of the feedforward NN is depicted in Fig. \ref{NNP_scheme}. It is made from several nodes organized in interconnected layers. The potential energy \textit{E} corresponds to the node in the \textbf{output layer} and the atomic coordinates of a frame are provided in the \textbf{input layer} as vectors of input coordinates $G=\{G_i\}$. The input and output layers are connected via several so-called \textbf{hidden layers} with no physical meaning. The number of layers and the nodes define the flexibility of the final NN. 
+Each node is connected to the nodes of the next layer with a specific weight \textbf{$w_{ij}^{kl}$}, where $i$ is the index of a node of layer $k$, which is connected to the node with index $j$ of layer $l$. For instance, the $w_{11}^{01}$ connects the nodes $G_1$ ($k = 0$, $i=1$) and $x_1^1$ ($l=1$,  $j=1$). Nodes in hidden and output layers are connected to a so-called bias node, which scales their values by a bias weight b$_i^j$, where $j$ is the layer of the target node and $i$ is the node index. In our scheme, the bias node is omitted for simplicity.
 
-The value y$_i^j$ of any node is computed as:
+The value x$_i^j$ of any node is computed as:
 \begin{equation}
-    y_i^{j} = f_i^j(b_i^j + \sum_{k=1}^{N_{j-1}} a_{k,i}^{j-1,j} y_k^{j-1})
+    x_i^{j} = f_i^j(b_i^j + \sum_{k=1}^{N_{j-1}} w_{k,i}^{j-1,j} x_k^{j-1})
 \end{equation}
 The equation is a linear combination of the values of all nodes in the previous layer scaled by the bias weight. The term f$_i^j$ represents the \textbf{activation function} of the NN. The activation function ensures the ability to fit complex non-linear functions. The examples of activation functions are:
 \begin{itemize}
@@ -126,15 +124,11 @@ The equation is a linear combination of the values of all nodes in the previous 
     \item trigonometric functions
     \item exponential function.
 \end{itemize}
-According to Figure~\ref{NNP_scheme}, the complete functional form for the energy is given by:
-\begin{equation}
-    E = f_1^3(b_1^3 + \sum_{k=1}^4 a_{k1}^{23} f_k^2 (b_k^2 + \sum_{j=1}^5 a{jk}^{12} f_j^1 (b_j^1 + \sum_{i=1}^4 a_{ij}^{01} G_i)))
-\end{equation}
 
 \subsection{High--dimensional NNP}
 \begin{figure}[!htp]
     \centering
-    \includegraphics[scale=0.7]{latex_files/High-dimensional-NNP_scheme.jpeg}
+    \includegraphics[scale=1.0]{latex_files/BP_NN.png}
     \caption{High dimensional NN scheme: Atomic positions are represented by a vector of symmetry functions $G_i$. }
     \label{High-dimensional-NNP_scheme}
 \end{figure}
@@ -165,19 +159,19 @@ The typically used ACSFs are two-body radial and three-body angular functions in
 
 where $f_c$ is a cutoff function ensuring the smooth decay of the symmetry function to zero.   
 
-In this tutorial, we use the original Behler-Parrinello ACSFs. However, during the last years, many modifications to the original ACSFs were proposed as well as new types of functional forms to describe the atomic environments. Various types of structural representations are summarized for example in Ref. \citenum{Musil2021}.
+In this tutorial, we use the original Behler-Parrinello ACSFs. However, during the last years, modifications to the original ACSFs were proposed together with new functional forms to describe the atomic environments. The different structural representations are summarized in Ref. \citenum{Musil2021}.
 
 \subsection{Constructing and training NN}
 The general protocol to construct NNP is as follows:
 \begin{enumerate}
-    \item \textbf{Define an initial set of structures and compute the reference energies and forces.} The electronic structure method used as a reference should be accurate enough to describe the studied problem.
-    \item T\textbf{rain the first version of NNPs.} The fraction of the data set (\textit{e.g.} 80 \%) is used in the NNP training (so-called training set) while the remaining part serves as a test set to validate the error on unseen data. Ideally, several different NNP with different training sets should be trained to identify potential problems in the training set.
-    \item \textbf{Perform preliminary simulations using the NNPs} to evaluate the stability of the NNP and identify underrepresented areas of the PES, \textit{e.g.} structures triggering extrapolation warnings or unphysical geometries.
-    \item \textbf{Isolate the problematic structures}, compute reference data and add them to the training set and re-train the NNP.
+    \item \textbf{Define an initial set of structures and compute the reference energies and forces.} The electronic structure method used as a reference should be accurate enough to describe the studied problem, but also suitable to perform thousands of computations of large systems.
+    \item T\textbf{rain the first version of NNPs.} The fraction of the data set is used in the NNP training (so-called training set) while the remaining part serves as a test set to validate the error on unseen data. Ideally, several different NNP with different training sets should be trained to identify potential problems in the training set.
+    \item \textbf{Perform preliminary simulations using the NNPs.} The stability of the NNP should be verified and underrepresented areas of the PES should be added to the training set, \textit{e.g.} structures triggering extrapolation warnings or unphysical geometries.
     \item Repeat the validation and re-training of the NNP until no instabilities are present.
 \end{enumerate}
 
 For a detailed general tutorial review on Behler-Parrinello NN, see Ref. \citenum{Behler2015tutorial}. 
+
 
 \newpage
 \fancyhead[L]{3. Requirements}
@@ -409,7 +403,7 @@ The initial input files needed for the training are therefore:
 \subsubsection{Selection of a subset of descriptors}
 \begin{mybox2}{{Input Files, Executables and Scripts}}
 \begin{minipage}[c]{0.5\linewidth}
-\includegraphics[scale=0.1]{latex_files/n2p2.png}
+%\includegraphics[scale=0.1]{latex_files/n2p2.png}
 \end{minipage}
 \begin{minipage}[c]{0.5\linewidth}
 \begin{itemize}
@@ -556,7 +550,7 @@ Finally, with the database of energies and forces for the training structures, w
 %\subsubsection{New scaling.data file}
 \begin{mybox2}{{Input Files, Executables and Scripts}}
 \begin{minipage}[c]{0.5\linewidth}
-\includegraphics[scale=0.1]{latex_files/n2p2.png}
+%\includegraphics[scale=0.1]{latex_files/n2p2.png}
 \end{minipage}
 \begin{minipage}[c]{0.5\linewidth}
 \begin{itemize}
@@ -704,8 +698,9 @@ To obtain stable and reliable molecular dynamics, the NNP quality needs to be im
 \section{Part 3: From direct to baselined NNP}
 %
 \subsection{What is baselined NNP?}
-In the previous sections, we learned how to generate the NNPs and use them with the i-PI interface. While the NNP trained directly on DFT data provide predictions at impressive speed, they are often difficult to stabilize, especially for complex systems using more than three elements. As demonstrated by the example, stabilization of direct NNPs is not an easy task, even for a small water box. 
-A suitable alternative when dealing with large and complex systems is to use so-called baselined NNP.\cite{ramakrishnan2015big} Instead of reproducing directly the DFT data, the baselined NNPs are trained to correct the forces and energy computed at a lower level of theory. The baselined NNPs thus require a lower number of structures and descriptors and are more robust compared to the direct NNP. In the following part, we demonstrate how to train the baselined NNPs adn apply them in the MD.
+In the previous sections, we learned how to generate the NNPs and use them with the i-PI interface. While the NNP trained directly on DFT data provide predictions at impressive speed, they are often difficult to stabilize, especially for complex systems using more than three elements. 
+
+An alternative for large and complex systems is so-called baselined NNP.\cite{ramakrishnan2015big} Instead of reproducing directly the DFT data, the baselined NNPs are trained to correct the energy and forces computed at a lower level of theory. The baselined NNPs thus require a lower number of structures and descriptors and are more robust than the direct NNP. In the following parts, we demonstrate how to train the baselined NNPs and apply them in the MD.
 %
 \subsection{Baselined energy and forces}
 \begin{mybox2}{{Input Files, Executables and Scripts}}
@@ -721,11 +716,11 @@ A suitable alternative when dealing with large and complex systems is to use so-
 \end{itemize}
 \end{minipage}
 \end{mybox2}
-At the beginning, we need to choose a suitable baseline method for the NNP. The baseline can be any computational method which provides reasonable results at computational cost significantly lower the reference. In this tutorial, we use the GFN0-xTB Hamiltonian from the family of xTB methods.\cite{https://doi.org/10.1002/wcms.1493} 
+In the beginning, we need to choose a suitable baseline method for the NNP. The baseline can be any computational method that provides reasonable results at a computational cost significantly lower than the reference. This is important as the baseline is used also to propagate the dynamics of the system. Here, we use the GFN0-xTB Hamiltonian from the family of xTB methods.\cite{https://doi.org/10.1002/wcms.1493} 
 
-The construction of the baselined NNPs is practically identical to the direct NNP. However, the target properties are not the DFT data but the difference between the DFT and GFN0-xTB results. As a first step, we therefore need to compute the energy and forces for the existing set of structures. For this, we use the xTB v6.2. To automatize the computation, we use ase calculator to prepare the structures and submit the computations. The calculator is available at xtb\_io.py. 
+The construction of the baselined NNPs is practically identical to the direct NNP. However, the target properties are not the DFT data but the difference between the DFT and GFN0-xTB results. As a first step, we, therefore, need to compute the energy and forces for the existing set of structures. For this, we use the periodic implementation of GFN0-xTB in xtb v6.2. To automatize the preparation of the files and computations, we perform the computations by the xtb-ase calculator available at xtb\_io.py. 
 
-At the beginning, copy the xyz structures used for PBE computations into new folder. Then, use script prepare\_xtb.sh to move every structure to separated dictionary and submit the computations. The example of the submission script is at submit.sh. You will need to modify the path to the xtb and cluster specific settings.
+In the beginning, copy the xyz structures used for PBE computations into a new folder. Then, use script prepare\_xtb.sh to move every structure to a separated dictionary and submit the computations. The example of the submission script is at submit.sh. You will need to modify the path to the xtb and cluster-specific settings.
 
 Once the computations are finished, use process\_xtb\_forces.sh to create the forces database and translate\_xtb.f90 to generate new input.data file.
 
@@ -738,7 +733,7 @@ Once the computations are finished, use process\_xtb\_forces.sh to create the fo
 \subsection{The training}
 \begin{mybox2}{{Input Files, Executables and Scripts}}
 \begin{minipage}[c]{0.5\linewidth}
-\includegraphics[scale=0.1]{latex_files/n2p2.png}
+%\includegraphics[scale=0.1]{latex_files/n2p2.png}
 \end{minipage}
 \begin{minipage}[c]{0.5\linewidth}
 \begin{itemize}
@@ -750,7 +745,7 @@ Once the computations are finished, use process\_xtb\_forces.sh to create the fo
 \end{minipage}
 \end{mybox2}
 
-In the next step, create new folder for the training of the NNP, move there input.data and input.nn files and generate the scaling.data file for the new database. Here, we use the same input.nn file as for the direct NNP. However, the best parameters for the baselined NNP might be different. Feel free to experiment with the number of the epoch, size of the training set and test set, ratio of the forces etc.  
+In the next step, create a new folder for the training of the NNP, move there the input.data and input.nn files and generate the scaling.data file for the new database. Here, we use the same input.nn file as for the direct NNP. However, the best parameters for the baselined NNP might be different. Feel free to experiment with the number of the epoch, size of the training set and test set, a ratio of the forces, etc.  
 
 In general, the RMSE errors in the training of the baselined NNP will be lower than in the direct case. For the comparison of the baselined and direct NNP, see for example Ref. \citenum{Rossi2020,Juraskova2021}.
 \begin{mybox3}{Output Files}
@@ -778,7 +773,7 @@ In general, the RMSE errors in the training of the baselined NNP will be lower t
 \end{minipage}
 \end{mybox2}
 
-Once the training is finished, you can launch the baselined--NNP MD. The main difference concerning the direct DFT is that apart from the NNP itself, you also need to compute the baseline energy and forces at every step. The input.xml for the i-PI therefore includes computations of forces using additional code, in our case xtb via xtb-ASE calculator. The new lines in the input.xml include two communication channels:
+Once the training finishes, you can launch the baselined--NNP MD. The main difference concerning the direct DFT is that apart from the NNP itself, you also need to compute the baseline energy and forces at every step. The input.xml for the i-PI, therefore, includes computations of forces by additional external code, in our case xtb via xtb-ASE calculator. The new lines in the input.xml include two communication channels:
 
 \begin{verbatim}
    <ffsocket mode="inet" name="driver-lammps1">
@@ -805,16 +800,39 @@ and two force computations:
     </forces>
 \end{verbatim}
 
-The weight in the first line depends on the definition of your correction in the input.data. In our case, the baselined NNP reproduce xTB - DFT energy and forces.
+The weight in the first line depends on the definition of your correction in the input.data. Here, the baselined NNP reproduces xTB - DFT energy and forces and has a negative sign.
 
-While the MD with baselined NNP is more stable than with the direct NNP and does not expolde, it still produces unphysical geometries and has large extrapolation earnings (see log1.lammps). The iterative improvement of the NNP is therefore again needed. However, lower number of stuctures will be needed to improve quality of the NNP than in the direct case.
+While the MD with baselined NNP is more stable than the direct NNP one and does not explode, it still produces unphysical geometries and has large extrapolation warnings (see log1.lammps). The iterative improvement of the NNP is therefore needed, similarly as in the direct NNP case. However, a lower number of structures will be needed to improve the quality of the NNP.
 
 \subsection{Multiple-time-step approach}
 
-In the previous sections, we introduced direct and baselined NNP. While the water box is relatively simple system, we can already see that baselined NNP are more robust in the simulation and are easier to train. However, their application in the molecular dynamics is significantly more expensive than the direct NNP due to cost of the baseline. This limitations become much stronger for complex systems and systems with large number of atoms. 
-To decrease the computational cost of the baselined NNP while keep its accuracy, we use so called multiple-time-step approach (MTS).\cite{} 
+In the previous sections, we introduced direct and baselined NNP. While the baseline NNPs are more robust even for simple systems, their application in molecular dynamics is significantly more expensive due to the baseline computations. These limitations become more important for complex systems and systems with a large number of atoms. 
+To decrease the computational cost of the baselined NNP while keeping its accuracy, we use the so-called multiple-time-step approach (MTS).\cite{guid+08jcp,Luehr2014,Liberatore2018,Kapil2016}  
 
-Here, we use an MTS with a 1-6 scheme, where the energy and forces are computed by a direct NNP using an inner time step of 0.5 fs and corrected by GFN0-xtb and baselined NNP every 3 fs. All the relative keywords are mentioned within the input.xml and the structure of the file does not differ from the previous ones met during the tutorial.
+In this approach, the molecular dynamics are propagated by the forces corresponding to the cheaper and less accurate potential computed with a shorter integration time step (\textit{i.e.} inner time step) and are corrected by more accurate and expensive potential evaluated with a longer time step (\textit{i.e.}, outer time step). To estimate the largest allowed difference between the outer and inner time step, we need to monitor the conservation of the energy during the simulation. An example of the MTS benchmark study is, for example, in the Supporting information of Ref. \citenum{Rossi2020}.
+
+Here, we use an MTS with a 1-6 scheme, where the energy and forces are computed by a direct NNP using an inner time step of 0.5 fs and corrected by GFN0-xtb and baselined NNP every 3 fs. The input.xml file therefore needs to contain computation forces with direct NNP, baselined NNP and GFN0-xTB as:
+
+\begin{verbatim}
+    <forces>
+      <force forcefield ="driver-lammps1" weight='-1.000'>
+      <mts_weights>[1.0,0]</mts_weights> </force>
+      <force forcefield ="driver-xtb">
+      <mts_weights>[1.0,0]</mts_weights> </force>
+      <force forcefield ="driver-lammpsd1">
+      <mts_weights>[-1.0,1.0]</mts_weights></force>
+      </forces>
+\end{verbatim}
+
+The mts\_weights indicate the weights of the outer and inner time step, respectively. The baselined NNP and xtb potentials weigh 1.00 in the outer step and 0 in the inner step, while direct NNP has the weights 1.0 in the inner step and -1.0 in the outer step to avoid double counting of the NNP.  
+
+The  MTS scheme is then defined as
+ \begin{verbatim}
+    <nmts> [1,6] </nmts>
+    <timestep units='femtosecond'> 3.0 </timestep>
+ \end{verbatim}
+
+where the time step corresponds to the outer step. The inner step is determined by the MTS scheme. You can change the MTS scheme and observe its impact on the simulation cost and stability of the dynamics.
 
 %
 \newpage
